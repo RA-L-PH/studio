@@ -33,7 +33,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased overflow-hidden text-[11px];
+    @apply bg-background text-foreground font-body antialiased overflow-hidden text-sm;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
@@ -46,7 +46,7 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 3px;
+  width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   @apply bg-transparent;
