@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { WifiOff, RefreshCw, Database } from "lucide-react";
+import { useState, useEffect } from "react";
+import { WifiOff, Database } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { useRTDB } from "@/firebase";
 
@@ -22,7 +22,6 @@ export function ConnectionSentry() {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Monitor Firebase RTDB connection status
     const connectedRef = ref(rtdb, ".info/connected");
     const unsubscribe = onValue(connectedRef, (snap) => {
       setIsFirebaseConnected(snap.val() === true);
@@ -37,33 +36,25 @@ export function ConnectionSentry() {
 
   if (!mounted) return null;
 
-  // Show full-screen overlay for browser offline
   if (!isOnline) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md">
-        <div className="neumorphic p-8 rounded-3xl flex flex-col items-center gap-4 max-w-sm text-center border border-destructive/20 shadow-2xl">
-          <div className="p-4 rounded-full bg-destructive/10 text-destructive animate-pulse">
-            <WifiOff size={48} />
-          </div>
-          <h2 className="text-2xl font-headline text-destructive font-bold">Network Offline</h2>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm">
+        <div className="p-8 border border-destructive/20 bg-card rounded-xl flex flex-col items-center gap-4 text-center max-w-sm">
+          <WifiOff size={48} className="text-destructive animate-pulse" />
+          <h2 className="text-xl font-headline font-bold text-destructive uppercase tracking-widest">Offline</h2>
           <p className="text-muted-foreground text-sm">
-            Your clinic internet seems unstable. PulseQueue is attempting to reconnect...
+            Network connection lost. Attempting to reconnect...
           </p>
-          <div className="flex items-center gap-2 text-primary font-medium">
-            <RefreshCw size={16} className="animate-spin" />
-            <span className="text-sm">Reconnecting</span>
-          </div>
         </div>
       </div>
     );
   }
 
-  // Show toast-like indicator for Firebase disconnection
   if (!isFirebaseConnected) {
     return (
-      <div className="fixed bottom-4 right-4 z-[100] flex items-center gap-3 bg-destructive/90 text-destructive-foreground px-4 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-bottom-4">
-        <Database size={18} className="animate-pulse" />
-        <span className="text-sm font-bold font-headline uppercase tracking-wider">Sync Disconnected</span>
+      <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 bg-destructive px-4 py-2 rounded-lg text-destructive-foreground animate-in slide-in-from-right-4">
+        <Database size={16} className="animate-pulse" />
+        <span className="text-[10px] font-bold uppercase tracking-widest">Sync Lost</span>
       </div>
     );
   }

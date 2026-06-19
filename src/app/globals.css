@@ -15,7 +15,7 @@
     --primary-foreground: 210 40% 98%;
     --secondary: 222 47% 10%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 15%;
+    --muted: 222 47% 12%;
     --muted-foreground: 215 20% 65%;
     --accent: 174 75% 45%;
     --accent-foreground: 210 40% 98%;
@@ -24,7 +24,7 @@
     --border: 217 32% 12%;
     --input: 217 32% 12%;
     --ring: 217 91% 60%;
-    --radius: 1.5rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -40,55 +40,32 @@
   }
 }
 
-/* Glassmorphism Utilities */
-.glass {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Minimalist Card Style */
+.minimal-card {
+  @apply bg-card border border-border rounded-xl;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+.minimal-card:hover {
+  @apply border-primary/30;
 }
 
-/* Neumorphism Utilities (Optimized for Dark) */
-.neumorphic {
-  background: hsl(var(--card));
-  box-shadow: 8px 8px 16px #020617, -8px -8px 16px #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+/* Subtle Glow for Primary elements */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
-.neumorphic-inset {
-  background: hsl(var(--card));
-  box-shadow: inset 6px 6px 12px #020617, inset -6px -6px 12px #1e293b;
+.glow-accent {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.1);
 }
 
-.neumorphic-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Custom Scrollbar for Minimalist UI */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
-
-.neumorphic-button:active {
-  box-shadow: inset 4px 4px 8px #020617, inset -4px -4px 8px #1e293b;
-  transform: scale(0.98);
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
 }
-
-/* Combined "Neu-Glass" Style */
-.neu-glass {
-  @apply neumorphic;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
 }

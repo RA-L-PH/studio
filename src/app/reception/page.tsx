@@ -16,8 +16,8 @@ import {
   Users, 
   Activity,
   Trash2,
-  RefreshCcw,
-  Search
+  Search,
+  RefreshCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,6 @@ interface Patient {
   token_number: number;
   status: "waiting" | "active" | "completed" | "no-show";
   created_at: number;
-  called_at?: number;
 }
 
 export default function ReceptionPage() {
@@ -43,7 +42,7 @@ export default function ReceptionPage() {
   const [loading, setLoading] = useState(false);
   
   const statsRef = useMemo(() => ref(rtdb, "metrics"), [rtdb]);
-  const { data: stats, loading: statsLoading } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
+  const { data: stats } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
 
   const queueRef = useMemo(() => ref(rtdb, "queues"), [rtdb]);
   const { data: allPatients, loading: queueLoading } = useRTList<Patient>(queueRef);
@@ -104,7 +103,7 @@ export default function ReceptionPage() {
         metrics: { total_patients_today: 0, avg_consult_duration: 600000 },
         live_status: null
       });
-      toast({ title: "Reset Complete", description: "All queues cleared for new session." });
+      toast({ title: "Reset Complete", description: "Queue has been reset." });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Reset Error", description: err.message });
     } finally {
@@ -113,168 +112,119 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] p-4 md:p-8" suppressHydrationWarning>
+    <div className="min-h-screen bg-background p-6">
       <ConnectionSentry />
       
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 neu-glass p-8 rounded-[2.5rem]">
-          <div className="flex items-center gap-5">
-            <div className="p-4 rounded-[1.5rem] bg-primary/10 text-primary border border-primary/20 glow-blue">
-              <Activity size={32} />
-            </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 border border-border rounded-xl bg-card">
+          <div className="flex items-center gap-4">
+            <Activity className="text-primary w-8 h-8" />
             <div>
-              <h1 className="text-3xl md:text-4xl font-headline font-bold tracking-tight">Reception Console</h1>
-              <p className="text-muted-foreground text-sm flex items-center gap-2 font-bold uppercase tracking-widest mt-1">
-                {queueLoading ? <RefreshCcw size={14} className="animate-spin" /> : <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />}
-                {waitingPatients.length} Active in Queue
+              <h1 className="text-2xl font-headline font-bold">Reception Console</h1>
+              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                {queueLoading ? <RefreshCcw size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                {waitingPatients.length} Active Patients
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="glass-card py-4 px-6 rounded-2xl flex items-center gap-4">
-              <Clock className="text-accent" size={24} />
-              <div>
-                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Avg Session</p>
-                <p className="font-headline font-bold text-2xl text-accent">
-                  {Math.round((stats?.avg_consult_duration || 600000) / 60000)}m
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="px-4 py-2 rounded-lg bg-muted/50 border border-border flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Pace</span>
+              <span className="font-bold text-lg text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</span>
             </div>
-            <div className="glass-card py-4 px-6 rounded-2xl flex items-center gap-4">
-              <Users className="text-primary" size={24} />
-              <div>
-                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Total Daily</p>
-                <p className="font-headline font-bold text-2xl text-primary">{stats?.total_patients_today || 0}</p>
-              </div>
+            <div className="px-4 py-2 rounded-lg bg-muted/50 border border-border flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Today</span>
+              <span className="font-bold text-lg text-primary">{stats?.total_patients_today || 0}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearQueue} className="rounded-2xl h-14 w-14 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all">
-              <Trash2 size={24} />
+            <Button variant="ghost" size="icon" onClick={clearQueue} className="text-muted-foreground hover:text-destructive">
+              <Trash2 size={20} />
             </Button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Controls - Mobile First Column */}
-          <div className="lg:col-span-4 space-y-8">
-            <section className="neu-glass p-10 rounded-[3rem] space-y-8">
-              <div className="flex items-center gap-3">
-                <Plus size={24} className="text-primary" />
-                <h2 className="text-2xl font-headline font-bold">New Intake</h2>
-              </div>
-              <form onSubmit={handleIntake} className="space-y-6">
-                <div className="relative group">
-                  <User className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4 space-y-6">
+            <section className="minimal-card p-8 space-y-6">
+              <h2 className="text-lg font-headline font-bold flex items-center gap-2">
+                <Plus size={20} className="text-primary" /> New Intake
+              </h2>
+              <form onSubmit={handleIntake} className="space-y-4">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
-                    placeholder="Patient Legal Name"
-                    className="pl-14 h-20 bg-secondary/30 border-white/5 rounded-[1.5rem] neumorphic-inset text-xl focus:ring-primary/50"
+                    placeholder="Patient Name"
+                    className="pl-10 h-12 bg-muted/20"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full h-20 rounded-[1.5rem] font-headline font-bold text-2xl bg-primary hover:bg-primary/90 glow-blue shadow-2xl transition-all active:scale-95">
-                  Add to Queue
+                <Button type="submit" disabled={loading} className="w-full h-12 text-sm font-bold uppercase tracking-widest">
+                  Check In
                 </Button>
               </form>
             </section>
 
-            {/* Current Session Summary */}
-            <section className="neu-glass p-10 rounded-[3rem] bg-gradient-to-br from-card via-card to-accent/10">
-              <h2 className="text-2xl font-headline font-bold mb-8">Now Serving</h2>
-              <div className="space-y-6">
-                {activePatient ? (
-                  <div className="p-8 rounded-[2rem] glass-card border-accent/20 animate-in zoom-in-95 duration-500">
-                    <p className="text-xs font-black uppercase tracking-[0.3em] text-accent mb-6 text-center">Room 1 • Clinical Status</p>
-                    <div className="flex items-center gap-8">
-                      <div className="w-20 h-20 rounded-[1.5rem] bg-accent text-accent-foreground flex items-center justify-center font-black text-4xl shadow-xl">
-                        #{activePatient.token_number}
-                      </div>
-                      <div>
-                        <p className="font-headline font-bold text-3xl">{activePatient.name}</p>
-                        <p className="text-sm text-muted-foreground font-bold uppercase mt-2">Started {new Date(activePatient.called_at || activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                      </div>
-                    </div>
+            <section className="minimal-card p-8">
+              <h2 className="text-lg font-headline font-bold mb-4">Now Serving</h2>
+              {activePatient ? (
+                <div className="p-4 rounded-lg bg-accent/5 border border-accent/20 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded bg-accent text-accent-foreground flex items-center justify-center font-bold text-xl">
+                    #{activePatient.token_number}
                   </div>
-                ) : (
-                  <div className="py-20 text-center opacity-30 border-2 border-dashed border-white/10 rounded-[2rem]">
-                    <Clock size={48} className="mx-auto mb-4" />
-                    <p className="text-lg font-bold uppercase tracking-widest italic">Room Currently Idle</p>
+                  <div>
+                    <p className="font-bold text-lg">{activePatient.name}</p>
+                    <p className="text-xs text-muted-foreground uppercase">Started: {new Date(activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center border border-dashed border-border rounded-lg text-muted-foreground italic text-sm">
+                  Clinical area is idle
+                </div>
+              )}
             </section>
           </div>
 
-          {/* List - Desktop/Full View Column */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            <section className="neu-glass rounded-[3rem] flex-1 flex flex-col overflow-hidden">
-              <div className="p-10 border-b border-white/5 flex flex-col md:flex-row gap-8 md:items-center justify-between bg-white/[0.02]">
-                <div>
-                  <h2 className="text-3xl font-headline font-bold">Waiting Repository</h2>
-                  <p className="text-muted-foreground text-base font-bold uppercase tracking-widest mt-1">{waitingPatients.length} Active Records</p>
-                </div>
-                <div className="relative w-full md:w-80">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+          <div className="lg:col-span-8 flex flex-col">
+            <section className="minimal-card flex-1 flex flex-col overflow-hidden">
+              <div className="p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between">
+                <h2 className="text-lg font-headline font-bold">Waiting Repository</h2>
+                <div className="relative w-full md:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                   <Input 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search patients..."
-                    className="pl-14 h-14 bg-secondary/50 border-white/5 rounded-[1.25rem] neumorphic-inset text-lg"
+                    placeholder="Search..."
+                    className="pl-9 h-10 bg-muted/20"
                   />
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto min-h-[600px] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
                 {waitingPatients.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center space-y-6 py-48 opacity-20">
-                    <Users size={80} />
-                    <p className="text-2xl font-headline font-bold italic tracking-[0.4em] uppercase">No Patients Pending</p>
+                  <div className="h-64 flex flex-col items-center justify-center opacity-30">
+                    <Users size={48} className="mb-4" />
+                    <p className="text-sm font-bold uppercase tracking-widest">No active queue</p>
                   </div>
                 ) : (
-                  <div className="p-10 grid grid-cols-1 gap-6">
-                    {waitingPatients.map((p, idx) => (
-                      <div key={p.id} className="glass-card p-8 rounded-[2rem] flex items-center justify-between group hover:bg-primary/10 transition-all duration-300 border-white/5 hover:border-primary/30">
-                        <div className="flex items-center gap-8">
-                          <div className="w-16 h-16 rounded-[1.25rem] bg-secondary border border-white/5 flex items-center justify-center font-headline font-bold text-2xl text-muted-foreground group-hover:text-primary group-hover:border-primary/20 transition-all">
-                            #{p.token_number}
-                          </div>
-                          <div>
-                            <p className="font-headline font-bold text-3xl group-hover:translate-x-1 transition-transform">{p.name}</p>
-                            <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.2em] mt-2 italic">Intake Time: {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-3">
-                          <Badge variant="outline" className="rounded-xl px-5 py-2 font-black border-primary/30 text-primary uppercase tracking-widest glass">
-                            PENDING
-                          </Badge>
-                          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">Position #{idx + 1}</p>
-                        </div>
+                  waitingPatients.map((p, idx) => (
+                    <div key={p.id} className="p-4 border border-border rounded-lg flex items-center justify-between hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold text-muted-foreground w-8">#{p.token_number}</span>
+                        <p className="font-bold">{p.name}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase bg-muted px-2 py-1 rounded">Pos {idx + 1}</span>
+                        <Badge variant="outline" className="text-[10px] font-bold">WAITING</Badge>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </section>
           </div>
         </div>
       </div>
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          border: 2px solid transparent;
-          background-clip: content-box;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-      `}</style>
     </div>
   );
 }
