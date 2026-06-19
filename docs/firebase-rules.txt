@@ -6,21 +6,45 @@
 
 {
   "rules": {
-    ".read": "true",
-    ".write": "true",
     "queues": {
-      ".indexOn": ["token_number", "status"]
+      "$clinicCode": {
+        // Allow read/write access if the user's UID is associated with the clinic code
+        ".read": "root.child('clinic_owners').child(auth.uid).val() == $clinicCode",
+        ".write": "root.child('clinic_owners').child(auth.uid).val() == $clinicCode",
+        ".indexOn": ["token_number", "status"]
+      }
+    },
+    "clinic_owners": {
+      "$uid": {
+        // Allow a user to write their own clinic code mapping
+        ".write": "auth != null && auth.uid == $uid"
+      }
     }
   }
 }
+
+
 
 ## Firestore Rules
 # Location: firestore.rules (Keep these locked as we have migrated to RTDB)
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow users to create and manage their own clinic profile
+    match /clinics/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.resource.data.clinicCode != null;
+    }
+    
+    // Ensure clinicCode is unique
+    match /clinic_codes/{clinicCode} {
+    	allow read: if true;
+      allow create: if request.auth != null;
+    }
+
+    // Fallback for other collections, requires authentication
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if request.auth != null;
     }
   }
 }

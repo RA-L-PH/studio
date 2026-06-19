@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import {FirebaseClientProvider} from '@/firebase/client-provider';
+import { AuthProvider } from '@/firebase/auth-provider'; // Import AuthProvider
 
 export const metadata: Metadata = {
   title: 'PulseQueue | Real-Time Clinic Flow',
@@ -23,7 +24,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground min-h-screen" suppressHydrationWarning>
         <FirebaseClientProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </FirebaseClientProvider>
         <Toaster />
       </body>

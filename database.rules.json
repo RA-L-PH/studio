@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "queues": {
+      "$clinicCode": {
+        // Anyone can read the queue data
+        ".read": true,
+        // Only the owner can write to the queue
+        ".write": "root.child('clinic_owners').child(auth.uid).val() === $clinicCode"
+      }
+    },
+    "metrics": {
+      "$clinicCode": {
+        // Anyone can read the metrics for wait time calculation
+        ".read": true,
+        // Only the owner can write to the metrics
+        ".write": "root.child('clinic_owners').child(auth.uid).val() === $clinicCode"
+      }
+    },
+    "clinic_owners": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
