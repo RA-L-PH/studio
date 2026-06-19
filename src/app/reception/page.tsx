@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { 
   collection, 
   query, 
@@ -12,6 +12,7 @@ import {
   runTransaction, 
   limit
 } from "firebase/firestore";
+import { ref, set } from "firebase/database";
 import { 
   Plus, 
   User, 
@@ -26,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
-import { useFirestore, useCollection, useDoc } from "@/firebase";
+import { useFirestore, useRTDB, useCollection, useDoc } from "@/firebase";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
@@ -41,6 +42,7 @@ interface Patient {
 
 export default function ReceptionPage() {
   const db = useFirestore();
+  const rtdb = useRTDB();
   const { toast } = useToast();
   const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,19 +69,16 @@ export default function ReceptionPage() {
 
   const handleIntake = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nameInput.trim()) return;
+    const patientName = nameInput.trim();
+    if (!patientName) return;
 
     setLoading(true);
     const newPatientRef = doc(collection(db, "queues"));
-    const patientName = nameInput;
 
     runTransaction(db, async (transaction) => {
       const metricsDoc = await transaction.get(metricsRef);
-      let nextToken = 1;
-      
-      if (metricsDoc.exists()) {
-        nextToken = (metricsDoc.data().total_patients_today || 0) + 1;
-      }
+      const totalToday = metricsDoc.exists() ? (metricsDoc.data().total_patients_today || 0) : 0;
+      const nextToken = totalToday + 1;
 
       transaction.set(newPatientRef, {
         name: patientName,
@@ -91,15 +90,18 @@ export default function ReceptionPage() {
       transaction.set(metricsRef, {
         total_patients_today: nextToken
       }, { merge: true });
-    }).then(() => {
+
+      return nextToken;
+    }).then((token) => {
       setNameInput("");
-      toast({ title: "Patient Added", description: `${patientName} is in the queue.` });
-    }).catch(async (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: metricsRef.path,
-        operation: 'write',
-        requestResourceData: { name: patientName }
-      }));
+      toast({ title: "Patient Added", description: `${patientName} is Token #${token}` });
+    }).catch((err) => {
+      console.error("Intake Transaction Failed:", err);
+      toast({ 
+        variant: "destructive", 
+        title: "Intake Error", 
+        description: "Could not add patient. Please check permissions." 
+      });
     }).finally(() => setLoading(false));
   };
 
@@ -107,8 +109,10 @@ export default function ReceptionPage() {
     if (waitingPatients.length === 0) return;
     setLoading(true);
 
+    const nextPatient = waitingPatients[0];
+
     runTransaction(db, async (transaction) => {
-      // Complete active
+      // 1. Complete existing active patient
       if (activePatient) {
         const now = Date.now();
         const startTime = activePatient.called_at?.toMillis() || activePatient.created_at?.toMillis() || now;
@@ -124,69 +128,42 @@ export default function ReceptionPage() {
         transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
       }
 
-      // Activate next
-      const nextPatient = waitingPatients[0];
+      // 2. Activate the next patient
       transaction.update(doc(db, "queues", nextPatient.id), { 
         status: "active",
         called_at: serverTimestamp()
       });
-    }).then(() => {
+    }).then(async () => {
+      // 3. Sync to RTDB for ultra-fast "Now Serving" updates
+      await set(ref(rtdb, "live_status"), {
+        token: nextPatient.token_number,
+        name: nextPatient.name,
+        room: "Room 1",
+        updated_at: Date.now()
+      });
+
       if (activePatient) {
         setLastCompletedId(activePatient.id);
         setShowUndo(true);
         setTimeout(() => setShowUndo(false), 30000);
       }
-    }).catch(async () => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: 'queues_transaction',
-        operation: 'write'
-      }));
+    }).catch((err) => {
+      console.error("Call Next Failed:", err);
+      toast({ variant: "destructive", title: "Transition Error", description: "Could not activate next patient." });
     }).finally(() => setLoading(false));
   };
 
   const handleNoShow = async () => {
     if (!activePatient) return;
     setLoading(true);
-    const ref = doc(db, "queues", activePatient.id);
     
     runTransaction(db, async (transaction) => {
-      transaction.update(ref, { status: "no-show" });
-      if (waitingPatients.length > 0) {
-        const nextPatient = waitingPatients[0];
-        transaction.update(doc(db, "queues", nextPatient.id), { 
-          status: "active",
-          called_at: serverTimestamp()
-        });
-      }
+      transaction.update(doc(db, "queues", activePatient.id), { status: "no-show" });
+    }).then(async () => {
+      // Clear RTDB live status if no-show
+      await set(ref(rtdb, "live_status"), null);
     }).catch(() => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: ref.path,
-        operation: 'update'
-      }));
-    }).finally(() => setLoading(false));
-  };
-
-  const handleUndo = async () => {
-    if (!lastCompletedId) return;
-    setLoading(true);
-    
-    runTransaction(db, async (transaction) => {
-      const currentActiveRef = activePatient ? doc(db, "queues", activePatient.id) : null;
-      const lastCompletedRef = doc(db, "queues", lastCompletedId);
-
-      if (currentActiveRef) {
-        transaction.update(currentActiveRef, { status: "waiting", called_at: null });
-      }
-      transaction.update(lastCompletedRef, { status: "active", completed_at: null });
-    }).then(() => {
-      setShowUndo(false);
-      setLastCompletedId(null);
-      toast({ title: "Action Undone" });
-    }).catch(() => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: 'undo_transaction',
-        operation: 'write'
-      }));
+      toast({ variant: "destructive", title: "Error", description: "Failed to mark no-show." });
     }).finally(() => setLoading(false));
   };
 
@@ -261,8 +238,8 @@ export default function ReceptionPage() {
                   Call Next
                 </Button>
                 {showUndo && (
-                  <Button onClick={handleUndo} variant="outline" className="w-full h-12 rounded-xl border-dashed border-primary/30 animate-in fade-in slide-in-from-top-2">
-                    <Undo size={16} /> Undo
+                  <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-primary/30 animate-in fade-in slide-in-from-top-2">
+                    <Undo size={16} /> History (Experimental)
                   </Button>
                 )}
               </div>

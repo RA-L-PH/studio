@@ -23,6 +23,17 @@
         "avg_consult_duration": { "type": "number", "description": "Average duration in ms" },
         "total_patients_today": { "type": "number" }
       }
+    },
+    "LiveStatus": {
+      "title": "Live Status (RTDB)",
+      "description": "Ultra-fast synchronization for currently serving patient.",
+      "type": "object",
+      "properties": {
+        "token": { "type": "number" },
+        "name": { "type": "string" },
+        "room": { "type": "string" },
+        "updated_at": { "type": "number" }
+      }
     }
   },
   "auth": {
@@ -31,11 +42,17 @@
   "firestore": {
     "/queues/{queueId}": {
       "schema": "QueueItem",
-      "description": "Real-time list of patients."
+      "description": "Historical and pending queue data."
     },
     "/metrics/clinic_stats": {
       "schema": "ClinicStats",
-      "description": "Singleton document for clinic analytics."
+      "description": "Clinic analytics."
+    }
+  },
+  "realtime_db": {
+    "/live_status": {
+      "schema": "LiveStatus",
+      "description": "The 'Now Serving' ticker for the clinic."
     }
   }
 }
