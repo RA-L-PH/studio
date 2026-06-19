@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { Activity, UserRound, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Activity, UserRound, LayoutDashboard, ArrowRight, Stethoscope } from "lucide-react";
 
 export default function Home() {
   return (
@@ -21,15 +21,15 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl relative z-10">
         <Link href="/reception" className="group">
           <div className="neumorphic p-8 rounded-[2rem] h-full flex flex-col gap-6 neumorphic-button hover:border-primary/20 transition-all">
             <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary glow-blue">
               <LayoutDashboard size={32} />
             </div>
             <div>
-              <h3 className="text-2xl font-headline font-bold mb-2">Reception Portal</h3>
-              <p className="text-muted-foreground">Manage incoming patients, call next, and resolve no-shows with rapid intake.</p>
+              <h3 className="text-2xl font-headline font-bold mb-2">Reception</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">Rapid intake, patient registration, and queue oversight for administrative staff.</p>
             </div>
             <div className="mt-auto flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all">
               Launch Portal <ArrowRight size={18} />
@@ -37,24 +37,39 @@ export default function Home() {
           </div>
         </Link>
 
-        <Link href="/patient" className="group">
-          <div className="neumorphic p-8 rounded-[2rem] h-full flex flex-col gap-6 neumorphic-button hover:border-accent/20 transition-all">
+        <Link href="/doctor" className="group">
+          <div className="neumorphic p-8 rounded-[2rem] h-full flex flex-col gap-6 neumorphic-button hover:border-accent/20 transition-all border-accent/10">
             <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-accent glow-cyan">
+              <Stethoscope size={32} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-headline font-bold mb-2">Clinician</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">Real-time exam room management. Mark patients completed and call next instantly.</p>
+            </div>
+            <div className="mt-auto flex items-center gap-2 text-accent font-medium group-hover:gap-3 transition-all">
+              Doctor Login <ArrowRight size={18} />
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/patient" className="group">
+          <div className="neumorphic p-8 rounded-[2rem] h-full flex flex-col gap-6 neumorphic-button hover:border-foreground/10 transition-all">
+            <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-foreground/70">
               <UserRound size={32} />
             </div>
             <div>
-              <h3 className="text-2xl font-headline font-bold mb-2">Patient Monitor</h3>
-              <p className="text-muted-foreground">Live real-time updates for patients on their mobile devices or clinic screens.</p>
+              <h3 className="text-2xl font-headline font-bold mb-2">Monitor</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">The "Now Serving" ticker for waiting rooms and personal mobile device updates.</p>
             </div>
-            <div className="mt-auto flex items-center gap-2 text-accent font-medium group-hover:gap-3 transition-all">
-              Open Monitor <ArrowRight size={18} />
+            <div className="mt-auto flex items-center gap-2 text-muted-foreground font-medium group-hover:gap-3 transition-all group-hover:text-foreground">
+              Open Display <ArrowRight size={18} />
             </div>
           </div>
         </Link>
       </div>
       
       <footer className="mt-12 text-muted-foreground text-sm opacity-50">
-        PulseQueue v1.0.0 &copy; 2025 Professional Clinic Solutions
+        PulseQueue v1.1.0 &copy; 2025 Professional Clinic Solutions
       </footer>
     </div>
   );
