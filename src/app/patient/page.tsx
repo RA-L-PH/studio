@@ -50,109 +50,109 @@ export default function PatientPage() {
   const totalWait = Math.round((waitingPatients.length * avgDur) / 60000);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col text-foreground select-none overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col text-foreground select-none overflow-hidden text-sm">
       <ConnectionSentry />
       
-      <header className="p-8 lg:p-12 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Activity className="text-primary w-10 h-10" />
-          <h1 className="text-4xl font-headline font-bold tracking-tighter uppercase italic">PulseQueue</h1>
+      <header className="p-6 lg:p-8 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Activity className="text-primary w-8 h-8" />
+          <h1 className="text-2xl font-headline font-bold tracking-tighter uppercase italic">PulseQueue</h1>
         </div>
-        <div className="flex gap-8 items-end">
+        <div className="flex gap-6 items-end">
           <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-1">Estimated Wait</p>
-            <p className="text-5xl font-headline font-bold">~{totalWait} MINS</p>
+            <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-primary mb-0.5">Estimated Wait</p>
+            <p className="text-3xl font-headline font-bold">~{totalWait}m</p>
           </div>
-          <div className="px-6 py-2 border border-border rounded-xl">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1">Waiting</p>
-            <p className="text-3xl font-headline font-bold">{waitingPatients.length}</p>
+          <div className="px-4 py-1.5 border border-border rounded-lg">
+            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-0.5">Queue</p>
+            <p className="text-xl font-headline font-bold">{waitingPatients.length}</p>
           </div>
         </div>
       </header>
 
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        {/* Main "Now Serving" Area */}
-        <section className="lg:col-span-7 flex flex-col items-center justify-center p-12 text-center border-r border-border bg-card/10">
-          <div className="max-w-4xl w-full space-y-16">
-            <div className="inline-flex items-center gap-3 px-8 py-3 rounded-full border border-accent/30 text-accent font-bold uppercase tracking-[0.5em] text-lg animate-pulse">
-              <BellRing size={24} />
-              Now Serving
+        {/* Main "Now Serving" Area - Scaled Down */}
+        <section className="lg:col-span-7 flex flex-col items-center justify-center p-8 text-center border-r border-border bg-card/5">
+          <div className="max-w-2xl w-full space-y-10">
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-accent/20 text-accent font-bold uppercase tracking-[0.4em] text-sm animate-pulse">
+              <BellRing size={16} />
+              Serving
             </div>
 
             {liveStatus ? (
-              <div className="space-y-8 animate-in zoom-in-95 duration-1000">
-                <span className="text-[18rem] md:text-[24rem] font-headline font-bold leading-none text-accent">
+              <div className="space-y-6 animate-in zoom-in-95 duration-1000">
+                <span className="text-[12rem] md:text-[16rem] font-headline font-bold leading-none text-accent block">
                   #{liveStatus.token}
                 </span>
-                <div className="space-y-6">
-                  <h2 className="text-6xl md:text-8xl font-headline font-bold tracking-tight">{liveStatus.name}</h2>
-                  <div className="inline-block px-12 py-6 border-2 border-accent rounded-xl text-accent">
-                    <p className="text-xl font-bold uppercase tracking-widest mb-1 opacity-70">Proceed To</p>
-                    <p className="text-5xl md:text-7xl font-headline font-bold uppercase">{liveStatus.room}</p>
+                <div className="space-y-4">
+                  <h2 className="text-5xl md:text-6xl font-headline font-bold tracking-tight">{liveStatus.name}</h2>
+                  <div className="inline-block px-10 py-4 border-2 border-accent rounded-lg text-accent">
+                    <p className="text-sm font-bold uppercase tracking-widest mb-0.5 opacity-70">Proceed To</p>
+                    <p className="text-4xl md:text-5xl font-headline font-bold uppercase">{liveStatus.room}</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="py-24 space-y-6 opacity-20">
-                <Activity size={120} className="mx-auto" />
-                <p className="text-4xl font-headline font-bold italic uppercase tracking-widest">Standing By</p>
+              <div className="py-20 space-y-4 opacity-10">
+                <Activity size={80} className="mx-auto" />
+                <p className="text-3xl font-headline font-bold italic uppercase tracking-widest">Standing By</p>
               </div>
             )}
           </div>
         </section>
 
-        {/* Sidebar Queue List */}
-        <section className="lg:col-span-5 flex flex-col bg-card/20">
-          <div className="p-8 border-b border-border flex justify-between items-center">
-            <h3 className="text-xl font-headline font-bold flex items-center gap-3 uppercase tracking-widest">
+        {/* Sidebar Queue List - Compact */}
+        <section className="lg:col-span-5 flex flex-col bg-card/10">
+          <div className="p-6 border-b border-border flex justify-between items-center">
+            <h3 className="text-sm font-headline font-bold uppercase tracking-widest">
               Upcoming
             </h3>
-            <Badge variant="outline" className="px-3 py-1 font-bold text-primary border-primary/40">LIVE</Badge>
+            <Badge variant="outline" className="text-[8px] px-2 py-0.5 font-bold text-primary border-primary/40">LIVE</Badge>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 space-y-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
             {waitingPatients.map((p, idx) => (
               <div 
                 key={p.id} 
-                className={`p-6 border border-border rounded-xl flex items-center justify-between transition-all ${idx === 0 ? 'bg-primary/5 border-primary/40' : 'opacity-60'}`}
+                className={`p-4 border border-border rounded-lg flex items-center justify-between transition-all ${idx === 0 ? 'bg-primary/5 border-primary/30' : 'opacity-50'}`}
               >
-                <div className="flex items-center gap-6">
-                  <div className={`w-14 h-14 rounded-lg flex items-center justify-center font-headline font-bold text-2xl ${idx === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-md flex items-center justify-center font-headline font-bold text-xl ${idx === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                     #{p.token_number}
                   </div>
                   <div>
-                    <p className="text-2xl font-headline font-bold">{p.name}</p>
-                    <div className="flex items-center gap-2 mt-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      <Clock size={12} />
-                      {idx === 0 ? "Next in line" : `Est. ${ (idx + 1) * Math.round(avgDur / 60000) } mins`}
+                    <p className="text-lg font-headline font-bold">{p.name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <Clock size={10} />
+                      {idx === 0 ? "Next" : `~${ (idx + 1) * Math.round(avgDur / 60000) }m`}
                     </div>
                   </div>
                 </div>
                 {idx === 0 && (
-                  <ChevronRight size={32} className="text-primary animate-bounce-x" />
+                  <ChevronRight size={24} className="text-primary animate-bounce-x" />
                 )}
               </div>
             ))}
 
             {waitingPatients.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center opacity-10 py-32">
-                <Users size={80} />
-                <p className="text-xl font-bold uppercase mt-4 tracking-widest">Queue Empty</p>
+              <div className="h-full flex flex-col items-center justify-center opacity-10 py-24">
+                <Users size={60} />
+                <p className="text-sm font-bold uppercase mt-3 tracking-widest">Empty</p>
               </div>
             )}
           </div>
         </section>
       </main>
 
-      <footer className="p-6 border-t border-border flex justify-between items-center bg-card/5 text-[10px] font-bold uppercase tracking-[0.4em] text-muted-foreground">
-        <p>Live predictive analytics based on clinical throughput</p>
-        <p>Pulse Protocol v1.5.0</p>
+      <footer className="p-4 border-t border-border flex justify-between items-center bg-card/5 text-[8px] font-bold uppercase tracking-[0.4em] text-muted-foreground">
+        <p>Live predictive analytics</p>
+        <p>v1.6.0</p>
       </footer>
 
       <style jsx global>{`
         @keyframes bounce-x {
           0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(5px); }
+          50% { transform: translateX(3px); }
         }
         .animate-bounce-x {
           animation: bounce-x 1s infinite;

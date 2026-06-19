@@ -12,7 +12,6 @@ import {
 import { 
   Plus, 
   User, 
-  Clock, 
   Users, 
   Activity,
   Trash2,
@@ -95,7 +94,7 @@ export default function ReceptionPage() {
   };
 
   const clearQueue = async () => {
-    if (!confirm("Confirm Reset? This wipes the daily queue data.")) return;
+    if (!confirm("Confirm Reset?")) return;
     setLoading(true);
     try {
       await update(ref(rtdb), {
@@ -103,7 +102,7 @@ export default function ReceptionPage() {
         metrics: { total_patients_today: 0, avg_consult_duration: 600000 },
         live_status: null
       });
-      toast({ title: "Reset Complete", description: "Queue has been reset." });
+      toast({ title: "Reset Complete" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Reset Error", description: err.message });
     } finally {
@@ -112,74 +111,74 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <ConnectionSentry />
       
-      <div className="max-w-7xl mx-auto space-y-6">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 border border-border rounded-xl bg-card">
-          <div className="flex items-center gap-4">
-            <Activity className="text-primary w-8 h-8" />
+      <div className="max-w-6xl mx-auto space-y-4">
+        <header className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+          <div className="flex items-center gap-3">
+            <Activity className="text-primary w-6 h-6" />
             <div>
-              <h1 className="text-2xl font-headline font-bold">Reception Console</h1>
-              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                {queueLoading ? <RefreshCcw size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
-                {waitingPatients.length} Active Patients
+              <h1 className="text-lg font-headline font-bold">Reception</h1>
+              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                {queueLoading ? <RefreshCcw size={10} className="animate-spin" /> : <span className="w-1 h-1 rounded-full bg-accent" />}
+                {waitingPatients.length} Active
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 rounded-lg bg-muted/50 border border-border flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Pace</span>
-              <span className="font-bold text-lg text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</span>
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1 rounded-md bg-muted/50 border border-border flex flex-col items-center">
+              <span className="text-[8px] uppercase font-bold text-muted-foreground">Pace</span>
+              <span className="font-bold text-sm text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</span>
             </div>
-            <div className="px-4 py-2 rounded-lg bg-muted/50 border border-border flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Today</span>
-              <span className="font-bold text-lg text-primary">{stats?.total_patients_today || 0}</span>
+            <div className="px-3 py-1 rounded-md bg-muted/50 border border-border flex flex-col items-center">
+              <span className="text-[8px] uppercase font-bold text-muted-foreground">Today</span>
+              <span className="font-bold text-sm text-primary">{stats?.total_patients_today || 0}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearQueue} className="text-muted-foreground hover:text-destructive">
-              <Trash2 size={20} />
+            <Button variant="ghost" size="icon" onClick={clearQueue} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+              <Trash2 size={16} />
             </Button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4 space-y-6">
-            <section className="minimal-card p-8 space-y-6">
-              <h2 className="text-lg font-headline font-bold flex items-center gap-2">
-                <Plus size={20} className="text-primary" /> New Intake
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-4 space-y-4">
+            <section className="minimal-card p-6 space-y-4">
+              <h2 className="text-sm font-headline font-bold flex items-center gap-2">
+                <Plus size={16} className="text-primary" /> New Intake
               </h2>
-              <form onSubmit={handleIntake} className="space-y-4">
+              <form onSubmit={handleIntake} className="space-y-3">
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                   <Input 
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     placeholder="Patient Name"
-                    className="pl-10 h-12 bg-muted/20"
+                    className="pl-9 h-10 bg-muted/10 text-xs"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full h-12 text-sm font-bold uppercase tracking-widest">
+                <Button type="submit" disabled={loading} className="w-full h-10 text-xs font-bold uppercase tracking-widest">
                   Check In
                 </Button>
               </form>
             </section>
 
-            <section className="minimal-card p-8">
-              <h2 className="text-lg font-headline font-bold mb-4">Now Serving</h2>
+            <section className="minimal-card p-6">
+              <h2 className="text-sm font-headline font-bold mb-3">Serving</h2>
               {activePatient ? (
-                <div className="p-4 rounded-lg bg-accent/5 border border-accent/20 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded bg-accent text-accent-foreground flex items-center justify-center font-bold text-xl">
+                <div className="p-3 rounded-md bg-accent/5 border border-accent/10 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
                     #{activePatient.token_number}
                   </div>
                   <div>
-                    <p className="font-bold text-lg">{activePatient.name}</p>
-                    <p className="text-xs text-muted-foreground uppercase">Started: {new Date(activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="font-bold text-sm">{activePatient.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{new Date(activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>
               ) : (
-                <div className="py-8 text-center border border-dashed border-border rounded-lg text-muted-foreground italic text-sm">
-                  Clinical area is idle
+                <div className="py-6 text-center border border-dashed border-border rounded-md text-muted-foreground italic text-xs">
+                  Idle
                 </div>
               )}
             </section>
@@ -187,35 +186,35 @@ export default function ReceptionPage() {
 
           <div className="lg:col-span-8 flex flex-col">
             <section className="minimal-card flex-1 flex flex-col overflow-hidden">
-              <div className="p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between">
-                <h2 className="text-lg font-headline font-bold">Waiting Repository</h2>
-                <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h2 className="text-sm font-headline font-bold">Queue</h2>
+                <div className="relative w-48">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={12} />
                   <Input 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="pl-9 h-10 bg-muted/20"
+                    className="pl-8 h-8 bg-muted/10 text-xs"
                   />
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar max-h-[400px]">
                 {waitingPatients.length === 0 ? (
-                  <div className="h-64 flex flex-col items-center justify-center opacity-30">
-                    <Users size={48} className="mb-4" />
-                    <p className="text-sm font-bold uppercase tracking-widest">No active queue</p>
+                  <div className="h-48 flex flex-col items-center justify-center opacity-20">
+                    <Users size={32} className="mb-2" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
                   </div>
                 ) : (
                   waitingPatients.map((p, idx) => (
-                    <div key={p.id} className="p-4 border border-border rounded-lg flex items-center justify-between hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs font-bold text-muted-foreground w-8">#{p.token_number}</span>
-                        <p className="font-bold">{p.name}</p>
+                    <div key={p.id} className="p-3 border border-border rounded-md flex items-center justify-between hover:bg-muted/10 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold text-muted-foreground w-6">#{p.token_number}</span>
+                        <p className="font-bold text-sm">{p.name}</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase bg-muted px-2 py-1 rounded">Pos {idx + 1}</span>
-                        <Badge variant="outline" className="text-[10px] font-bold">WAITING</Badge>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">Pos {idx + 1}</span>
+                        <Badge variant="outline" className="text-[8px] h-5 px-1.5 font-bold">WAITING</Badge>
                       </div>
                     </div>
                   ))
