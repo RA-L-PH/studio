@@ -11,7 +11,8 @@ export function initializeFirebase() {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const rtdb = getDatabase(app);
+  // Explicitly passing the databaseURL ensures the client connects to the correct RTDB instance
+  const rtdb = getDatabase(app, firebaseConfig.databaseURL);
   return { app, db, auth, rtdb };
 }
 

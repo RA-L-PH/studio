@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   ref, 
   push, 
@@ -15,7 +16,8 @@ import {
   Users, 
   SkipForward, 
   Activity,
-  Trash2
+  Trash2,
+  RefreshCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,11 +41,13 @@ export default function ReceptionPage() {
   const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
   
+  // Real-time metrics
   const statsRef = useMemo(() => ref(rtdb, "metrics"), [rtdb]);
-  const { data: stats } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
+  const { data: stats, loading: statsLoading } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
 
+  // Real-time queue list
   const queueRef = useMemo(() => ref(rtdb, "queues"), [rtdb]);
-  const { data: allPatients } = useRTList<Patient>(queueRef);
+  const { data: allPatients, loading: queueLoading } = useRTList<Patient>(queueRef);
 
   const waitingPatients = useMemo(() => 
     allPatients
@@ -62,6 +66,7 @@ export default function ReceptionPage() {
 
     setLoading(true);
     try {
+      // Atomic increment for token number
       const { snapshot } = await runTransaction(statsRef, (currentData) => {
         if (!currentData) {
           return { total_patients_today: 1, avg_consult_duration: 600000 };
@@ -165,7 +170,7 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8" suppressHydrationWarning>
       <ConnectionSentry />
       
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
@@ -175,7 +180,10 @@ export default function ReceptionPage() {
           </div>
           <div>
             <h1 className="text-3xl font-headline font-bold">Reception Portal</h1>
-            <p className="text-muted-foreground">Managing {waitingPatients.length} patients waiting</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              {queueLoading ? <RefreshCcw className="w-3 h-3 animate-spin" /> : null}
+              Managing {waitingPatients.length} patients waiting
+            </p>
           </div>
         </div>
 
@@ -196,7 +204,13 @@ export default function ReceptionPage() {
               <p className="font-headline font-bold text-primary">{stats?.total_patients_today || 0}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={clearQueue} className="rounded-2xl h-full aspect-square text-muted-foreground hover:text-destructive">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={clearQueue} 
+            className="rounded-2xl h-full aspect-square text-muted-foreground hover:text-destructive"
+            suppressHydrationWarning
+          >
             <Trash2 size={20} />
           </Button>
         </div>
@@ -217,9 +231,10 @@ export default function ReceptionPage() {
                   onChange={(e) => setNameInput(e.target.value)}
                   placeholder="Patient Name"
                   className="pl-12 h-14 bg-secondary/50 border-none rounded-2xl neumorphic-inset"
+                  suppressHydrationWarning
                 />
               </div>
-              <Button type="submit" disabled={loading} className="w-full h-14 rounded-2xl font-headline font-bold text-lg bg-primary hover:bg-primary/90 glow-blue">
+              <Button type="submit" disabled={loading} className="w-full h-14 rounded-2xl font-headline font-bold text-lg bg-primary hover:bg-primary/90 glow-blue" suppressHydrationWarning>
                 Add to Queue
               </Button>
             </form>
@@ -233,6 +248,7 @@ export default function ReceptionPage() {
                   onClick={handleCallNext} 
                   disabled={loading || waitingPatients.length === 0}
                   className="w-full h-20 rounded-2xl font-headline font-bold text-xl bg-accent hover:bg-accent/90 text-accent-foreground flex items-center justify-center gap-3 glow-cyan neumorphic-button"
+                  suppressHydrationWarning
                 >
                   <SkipForward size={24} />
                   Call Next
@@ -243,7 +259,7 @@ export default function ReceptionPage() {
                 <div className="pt-4 border-t border-border/50">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Now Serving</span>
-                    <Button onClick={handleNoShow} variant="ghost" size="sm" className="text-destructive h-8 px-2">No-Show</Button>
+                    <Button onClick={handleNoShow} variant="ghost" size="sm" className="text-destructive h-8 px-2" suppressHydrationWarning>No-Show</Button>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent font-bold text-lg">

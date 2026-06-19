@@ -10,8 +10,12 @@ export function useRTValue<T = any>(ref: DatabaseReference | null) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!ref) return;
+    if (!ref) {
+      setLoading(false);
+      return;
+    }
 
+    // onValue is a real-time listener that fires initially and on every update
     const unsubscribe = onValue(
       ref,
       (snapshot: DataSnapshot) => {
@@ -19,7 +23,7 @@ export function useRTValue<T = any>(ref: DatabaseReference | null) {
         setLoading(false);
       },
       (err) => {
-        console.error("RTDB Error:", err);
+        console.error("RTDB Value Error:", err);
         setError(err);
         setLoading(false);
       }

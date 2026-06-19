@@ -10,16 +10,19 @@ export function useRTList<T = any>(ref: DatabaseReference | null) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!ref) return;
+    if (!ref) {
+      setLoading(false);
+      return;
+    }
 
     const unsubscribe = onValue(
       ref,
       (snapshot: DataSnapshot) => {
         const val = snapshot.val();
-        if (val) {
-          const list = Object.entries(val).map(([id, data]) => ({
+        if (val && typeof val === 'object') {
+          const list = Object.entries(val).map(([id, itemData]) => ({
             id,
-            ...(data as any),
+            ...(itemData as any),
           })) as T[];
           setData(list);
         } else {
