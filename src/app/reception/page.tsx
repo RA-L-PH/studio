@@ -28,8 +28,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
 import { useFirestore, useRTDB, useCollection, useDoc } from "@/firebase";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 interface Patient {
   id: string;
@@ -47,7 +45,6 @@ export default function ReceptionPage() {
   const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showUndo, setShowUndo] = useState(false);
-  const [lastCompletedId, setLastCompletedId] = useState<string | null>(null);
   
   const waitingQuery = useMemo(() => query(
     collection(db, "queues"), 
@@ -75,34 +72,41 @@ export default function ReceptionPage() {
     setLoading(true);
     const newPatientRef = doc(collection(db, "queues"));
 
-    runTransaction(db, async (transaction) => {
-      const metricsDoc = await transaction.get(metricsRef);
-      const totalToday = metricsDoc.exists() ? (metricsDoc.data().total_patients_today || 0) : 0;
-      const nextToken = totalToday + 1;
+    try {
+      const token = await runTransaction(db, async (transaction) => {
+        const metricsDoc = await transaction.get(metricsRef);
+        const metricsData = metricsDoc.data() || {};
+        const totalToday = metricsData.total_patients_today || 0;
+        const nextToken = totalToday + 1;
 
-      transaction.set(newPatientRef, {
-        name: patientName,
-        token_number: nextToken,
-        status: "waiting",
-        created_at: serverTimestamp()
+        transaction.set(newPatientRef, {
+          name: patientName,
+          token_number: nextToken,
+          status: "waiting",
+          created_at: serverTimestamp()
+        });
+
+        transaction.set(metricsRef, {
+          total_patients_today: nextToken,
+          // Initialize avg duration if it's the first patient
+          avg_consult_duration: metricsData.avg_consult_duration || 600000 
+        }, { merge: true });
+
+        return nextToken;
       });
 
-      transaction.set(metricsRef, {
-        total_patients_today: nextToken
-      }, { merge: true });
-
-      return nextToken;
-    }).then((token) => {
       setNameInput("");
       toast({ title: "Patient Added", description: `${patientName} is Token #${token}` });
-    }).catch((err) => {
+    } catch (err: any) {
       console.error("Intake Transaction Failed:", err);
       toast({ 
         variant: "destructive", 
         title: "Intake Error", 
-        description: "Could not add patient. Please check permissions." 
+        description: err.message || "Could not add patient. Please check Firebase console for rule violations." 
       });
-    }).finally(() => setLoading(false));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCallNext = async () => {
@@ -111,30 +115,29 @@ export default function ReceptionPage() {
 
     const nextPatient = waitingPatients[0];
 
-    runTransaction(db, async (transaction) => {
-      // 1. Complete existing active patient
-      if (activePatient) {
-        const now = Date.now();
-        const startTime = activePatient.called_at?.toMillis() || activePatient.created_at?.toMillis() || now;
-        const duration = now - startTime;
+    try {
+      await runTransaction(db, async (transaction) => {
+        if (activePatient) {
+          const now = Date.now();
+          const startTime = activePatient.called_at?.toMillis() || activePatient.created_at?.toMillis() || now;
+          const duration = now - startTime;
 
-        transaction.update(doc(db, "queues", activePatient.id), { 
-          status: "completed",
-          completed_at: serverTimestamp() 
+          transaction.update(doc(db, "queues", activePatient.id), { 
+            status: "completed",
+            completed_at: serverTimestamp() 
+          });
+
+          const currentAvg = stats?.avg_consult_duration || 600000;
+          const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
+          transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
+        }
+
+        transaction.update(doc(db, "queues", nextPatient.id), { 
+          status: "active",
+          called_at: serverTimestamp()
         });
-
-        const currentAvg = stats?.avg_consult_duration || 600000;
-        const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
-        transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
-      }
-
-      // 2. Activate the next patient
-      transaction.update(doc(db, "queues", nextPatient.id), { 
-        status: "active",
-        called_at: serverTimestamp()
       });
-    }).then(async () => {
-      // 3. Sync to RTDB for ultra-fast "Now Serving" updates
+
       await set(ref(rtdb, "live_status"), {
         token: nextPatient.token_number,
         name: nextPatient.name,
@@ -142,29 +145,34 @@ export default function ReceptionPage() {
         updated_at: Date.now()
       });
 
-      if (activePatient) {
-        setLastCompletedId(activePatient.id);
-        setShowUndo(true);
-        setTimeout(() => setShowUndo(false), 30000);
-      }
-    }).catch((err) => {
+      setShowUndo(true);
+      setTimeout(() => setShowUndo(false), 30000);
+    } catch (err: any) {
       console.error("Call Next Failed:", err);
-      toast({ variant: "destructive", title: "Transition Error", description: "Could not activate next patient." });
-    }).finally(() => setLoading(false));
+      toast({ 
+        variant: "destructive", 
+        title: "Transition Error", 
+        description: "Could not activate next patient. Error: " + err.message 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleNoShow = async () => {
     if (!activePatient) return;
     setLoading(true);
     
-    runTransaction(db, async (transaction) => {
-      transaction.update(doc(db, "queues", activePatient.id), { status: "no-show" });
-    }).then(async () => {
-      // Clear RTDB live status if no-show
+    try {
+      await runTransaction(db, async (transaction) => {
+        transaction.update(doc(db, "queues", activePatient.id), { status: "no-show" });
+      });
       await set(ref(rtdb, "live_status"), null);
-    }).catch(() => {
-      toast({ variant: "destructive", title: "Error", description: "Failed to mark no-show." });
-    }).finally(() => setLoading(false));
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: "Failed: " + err.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -1,10 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /queues/{queueId} {
-      allow read, write: if true; // Public for MVP clinic flow
-    }
-    match /metrics/clinic_stats {
+    // Global permissive rules for MVP development
+    match /{document=**} {
       allow read, write: if true;
     }
   }
