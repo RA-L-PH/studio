@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { Activity, UserRound, LayoutDashboard, ArrowRight, Stethoscope } from "lucide-react";
+import { Activity, UserRound, LayoutDashboard, ArrowRight, Stethoscope, Code2 } from "lucide-react";
 
 export default function Home() {
   return (
@@ -20,7 +20,7 @@ export default function Home() {
           Modern <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary to-accent">Clinic Flow.</span>
         </h1>
         <p className="text-muted-foreground text-xl max-w-lg mx-auto font-medium">
-          The ultimate fusion of real-time synchronization and predictive healthcare management.
+          A high-performance Full Stack solution for real-time patient management.
         </p>
       </div>
 
@@ -62,7 +62,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="text-2xl font-headline font-bold mb-3">Patient Display</h3>
-              <p className="text-muted-foreground text-base leading-relaxed">Big-screen "Now Serving" monitor for waiting rooms and mobiles.</p>
+              <p className="text-muted-foreground text-base leading-relaxed">Big-screen "Now Serving" monitor for waiting rooms.</p>
             </div>
             <div className="mt-auto flex items-center gap-2 text-muted-foreground font-bold text-lg group-hover:gap-4 transition-all group-hover:text-foreground">
               Open Display <ArrowRight size={20} />
@@ -70,9 +70,17 @@ export default function Home() {
           </div>
         </Link>
       </div>
+
+      <div className="relative z-10 animate-in fade-in duration-1000 delay-500">
+        <Link href="/about" className="inline-flex items-center gap-3 px-8 py-4 rounded-full glass border-white/10 hover:bg-white/5 transition-all group">
+          <Code2 size={20} className="text-primary" />
+          <span className="font-bold text-sm uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">Developer & Architecture Specs</span>
+          <ArrowRight size={16} className="text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        </Link>
+      </div>
       
       <footer className="mt-12 text-muted-foreground text-sm font-bold opacity-40 uppercase tracking-[0.2em] relative z-10">
-        System Protocol v1.5.0 • &copy; 2025
+        Full Stack Engine v1.5.0 • &copy; 2025
       </footer>
     </div>
   );
