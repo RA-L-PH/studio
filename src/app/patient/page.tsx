@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -36,8 +35,8 @@ export default function PatientPage() {
   const [activePatient, setActivePatient] = useState<Patient | null>(null);
   const [upNext, setUpNext] = useState<Patient[]>([]);
   const [stats, setStats] = useState({ avg_consult_duration: 600000 });
-  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [loadingExplanation, setLoadingExplanation] = useState(false);
 
   useEffect(() => {
     // Waiting count
@@ -73,27 +72,27 @@ export default function PatientPage() {
     };
   }, []);
 
-  // AI Prediction Trigger
+  // Explanation Trigger
   useEffect(() => {
-    async function getPrediction() {
+    async function getExplanation() {
       if (waitingCount === 0) {
-        setAiExplanation("No current wait time. Walk-ins available.");
+        setExplanation("No current wait time. Walk-ins available.");
         return;
       }
-      setLoadingAi(true);
+      setLoadingExplanation(true);
       try {
         const result = await explainWaitTimeFactors({
           numPatientsInQueue: waitingCount,
           averageConsultationDurationMs: stats.avg_consult_duration
         });
-        setAiExplanation(result.explanation);
+        setExplanation(result.explanation);
       } catch (e) {
-        setAiExplanation("Unable to calculate dynamic wait time.");
+        setExplanation("Unable to calculate dynamic wait time.");
       } finally {
-        setLoadingAi(false);
+        setLoadingExplanation(false);
       }
     }
-    const timer = setTimeout(getPrediction, 1000);
+    const timer = setTimeout(getExplanation, 500);
     return () => clearTimeout(timer);
   }, [waitingCount, stats.avg_consult_duration]);
 
@@ -126,7 +125,7 @@ export default function PatientPage() {
           
           {activePatient ? (
             <div className="space-y-4">
-              <h2 className="text-6xl font-headline font-bold text-accent glow-cyan-text drop-shadow-[0_0_10px_rgba(23,206,164,0.3)]">
+              <h2 className="text-6xl font-headline font-bold text-accent drop-shadow-[0_0_10px_rgba(23,206,164,0.3)]">
                 #{activePatient.token_number}
               </h2>
               <p className="text-2xl font-headline font-bold">{activePatient.name}</p>
@@ -143,12 +142,12 @@ export default function PatientPage() {
           )}
         </section>
 
-        {/* Predictive Wait Time Tool */}
+        {/* Wait Time Tool */}
         <section className="neumorphic p-6 rounded-[2rem] space-y-4 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-primary font-headline font-bold">
-              <Zap size={18} />
-              AI ESTIMATE
+              <Clock size={18} />
+              ESTIMATED WAIT
             </div>
             <div className="text-2xl font-headline font-bold">
               ~{totalEstimatedWait} <span className="text-sm text-muted-foreground font-normal">MINS</span>
@@ -156,13 +155,13 @@ export default function PatientPage() {
           </div>
           
           <div className="p-4 rounded-xl bg-secondary/30 text-sm leading-relaxed text-muted-foreground relative">
-            {loadingAi ? (
+            {loadingExplanation ? (
               <div className="flex items-center gap-2 animate-pulse">
                 <div className="w-4 h-4 rounded-full bg-primary/20" />
                 <span>Analyzing clinic flow...</span>
               </div>
             ) : (
-              <p>{aiExplanation}</p>
+              <p>{explanation}</p>
             )}
             <Info size={14} className="absolute bottom-2 right-2 opacity-20" />
           </div>
@@ -211,7 +210,6 @@ export default function PatientPage() {
         </section>
       </main>
 
-      {/* Footer Branding */}
       <footer className="p-8 text-center">
         <div className="flex items-center justify-center gap-2 opacity-40">
           <Activity size={14} />
