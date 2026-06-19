@@ -5,26 +5,26 @@
 
 @layer base {
   :root {
-    --background: 200 15% 6%;
-    --foreground: 210 20% 98%;
-    --card: 200 15% 8%;
-    --card-foreground: 210 20% 98%;
-    --popover: 200 15% 6%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 210 80% 50%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 200 15% 12%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 200 15% 15%;
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 222 47% 10%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 15%;
     --muted-foreground: 215 20% 65%;
-    --accent: 166 80% 45%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 174 75% 45%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 200 15% 15%;
-    --input: 200 15% 15%;
-    --ring: 210 80% 50%;
-    --radius: 1rem;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32% 12%;
+    --input: 217 32% 12%;
+    --ring: 217 91% 60%;
+    --radius: 1.5rem;
   }
 }
 
@@ -40,15 +40,32 @@
   }
 }
 
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Neumorphism Utilities (Optimized for Dark) */
 .neumorphic {
   background: hsl(var(--card));
-  box-shadow: 8px 8px 16px #050607, -8px -8px 16px #151a1d;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 8px 8px 16px #020617, -8px -8px 16px #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .neumorphic-inset {
   background: hsl(var(--card));
-  box-shadow: inset 6px 6px 12px #050607, inset -6px -6px 12px #151a1d;
+  box-shadow: inset 6px 6px 12px #020617, inset -6px -6px 12px #1e293b;
 }
 
 .neumorphic-button {
@@ -56,14 +73,22 @@
 }
 
 .neumorphic-button:active {
-  box-shadow: inset 4px 4px 8px #050607, inset -4px -4px 8px #151a1d;
+  box-shadow: inset 4px 4px 8px #020617, inset -4px -4px 8px #1e293b;
   transform: scale(0.98);
 }
 
+/* Combined "Neu-Glass" Style */
+.neu-glass {
+  @apply neumorphic;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .glow-blue {
-  box-shadow: 0 0 15px rgba(26, 129, 230, 0.3);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 .glow-cyan {
-  box-shadow: 0 0 15px rgba(23, 206, 164, 0.3);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
 }

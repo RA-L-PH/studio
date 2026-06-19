@@ -96,85 +96,86 @@ export default function DoctorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-[#020617] p-4 md:p-12 flex flex-col items-center justify-center">
       <ConnectionSentry />
       
-      <div className="w-full max-w-6xl space-y-8">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-4 rounded-3xl bg-accent/10 text-accent neumorphic">
-              <Stethoscope size={36} />
+      <div className="w-full max-w-7xl space-y-12 animate-in fade-in duration-700">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 neu-glass p-10 rounded-[3rem]">
+          <div className="flex items-center gap-6">
+            <div className="p-5 rounded-[2rem] bg-accent/10 text-accent border border-accent/20 glow-cyan shadow-xl">
+              <Stethoscope size={44} />
             </div>
             <div>
-              <h1 className="text-4xl font-headline font-bold">Clinician Workspace</h1>
-              <p className="text-muted-foreground flex items-center gap-2 text-lg italic">
-                Room 1 • Dr. House
+              <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Clinical Hub</h1>
+              <p className="text-muted-foreground flex items-center gap-3 text-lg font-bold uppercase tracking-[0.2em] mt-2">
+                <span className="w-3 h-3 rounded-full bg-accent animate-pulse" />
+                Dr. Sterling • Room 1
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="neumorphic py-4 px-8 rounded-3xl flex items-center gap-4">
-              <Timer className="text-accent" size={24} />
+          <div className="flex gap-6">
+            <div className="glass-card py-5 px-10 rounded-[1.5rem] flex items-center gap-5">
+              <Timer className="text-accent" size={32} />
               <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Session Pace</p>
-                <p className="font-headline font-bold text-2xl text-accent">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-black">Pace (Avg)</p>
+                <p className="font-headline font-bold text-3xl text-accent">
                   {Math.round((stats?.avg_consult_duration || 600000) / 60000)}m
                 </p>
               </div>
             </div>
-            <div className="neumorphic py-4 px-8 rounded-3xl flex items-center gap-4">
-              <Users className="text-primary" size={24} />
+            <div className="glass-card py-5 px-10 rounded-[1.5rem] flex items-center gap-5">
+              <Users className="text-primary" size={32} />
               <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">In Queue</p>
-                <p className="font-headline font-bold text-2xl text-primary">{waitingPatients.length}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-black">Pending</p>
+                <p className="font-headline font-bold text-3xl text-primary">{waitingPatients.length}</p>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Action Area - Tablet Friendly Large Buttons */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Main Action Area */}
           <div className="lg:col-span-8">
-            <section className="neumorphic p-10 md:p-16 rounded-[3rem] bg-gradient-to-br from-card via-card to-accent/5 relative overflow-hidden min-h-[500px] flex flex-col justify-center">
-              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-                <Activity size={240} className="text-accent" />
+            <section className="neu-glass p-12 md:p-20 rounded-[4rem] bg-gradient-to-br from-card via-card to-accent/10 relative overflow-hidden min-h-[600px] flex flex-col justify-center border-accent/5">
+              <div className="absolute top-[-10%] right-[-10%] opacity-5 pointer-events-none">
+                <Activity size={400} className="text-accent" />
               </div>
               
-              <div className="relative z-10 space-y-12">
-                <div className="space-y-4">
-                  <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground font-bold text-center">Active Patient</p>
+              <div className="relative z-10 space-y-16">
+                <div className="space-y-6">
+                  <p className="text-sm uppercase tracking-[0.6em] text-accent/60 font-black text-center mb-10">Active Consultation Profile</p>
                   {activePatient ? (
-                    <div className="flex flex-col items-center gap-6">
-                      <div className="w-32 h-32 rounded-[2.5rem] bg-accent/20 flex items-center justify-center text-accent font-headline font-bold text-5xl glow-cyan">
+                    <div className="flex flex-col items-center gap-10 animate-in zoom-in-95 duration-700">
+                      <div className="w-40 h-40 rounded-[3rem] glass-card flex items-center justify-center text-accent font-headline font-bold text-7xl glow-cyan shadow-2xl border-accent/40">
                         #{activePatient.token_number}
                       </div>
-                      <div className="text-center">
-                        <h2 className="text-5xl md:text-7xl font-headline font-bold">{activePatient.name}</h2>
-                        <div className="flex items-center justify-center gap-3 mt-4 text-muted-foreground text-xl">
-                          <Clock size={24} /> 
-                          Started {activePatient.called_at ? new Date(activePatient.called_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                      <div className="text-center space-y-4">
+                        <h2 className="text-6xl md:text-8xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">{activePatient.name}</h2>
+                        <div className="flex items-center justify-center gap-4 text-muted-foreground text-2xl font-bold italic">
+                          <Clock size={28} className="text-accent" /> 
+                          Started {activePatient.called_at ? new Date(activePatient.called_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just Now'}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="py-20 text-center space-y-6">
-                      <div className="w-24 h-24 rounded-full bg-secondary mx-auto flex items-center justify-center text-muted-foreground/30">
-                        <UserCircle size={64} />
+                    <div className="py-24 text-center space-y-8 animate-in fade-in duration-1000">
+                      <div className="w-32 h-32 rounded-full glass-card mx-auto flex items-center justify-center text-muted-foreground/20 border-white/5">
+                        <UserCircle size={80} />
                       </div>
-                      <p className="text-muted-foreground italic text-2xl">Room 1 is currently empty.</p>
+                      <p className="text-muted-foreground italic text-3xl font-headline">Clinical Space Available</p>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-8">
+                <div className="pt-10">
                   <Button 
                     onClick={handleCompleteAndNext}
                     disabled={loading || (waitingPatients.length === 0 && !activePatient)}
-                    className="w-full h-32 rounded-[2.5rem] font-headline font-bold text-3xl bg-accent hover:bg-accent/90 text-accent-foreground flex items-center justify-center gap-6 glow-cyan neumorphic-button shadow-2xl"
+                    className="w-full h-36 rounded-[3rem] font-headline font-bold text-4xl bg-accent hover:bg-accent/90 text-accent-foreground flex items-center justify-center gap-8 glow-cyan shadow-2xl active:scale-95 transition-all"
                   >
-                    <SkipForward size={40} />
-                    {activePatient ? "Complete & Call Next" : "Call Next Patient"}
+                    <SkipForward size={48} />
+                    {activePatient ? "Complete Session" : "Call Next Patient"}
                   </Button>
                 </div>
               </div>
@@ -182,39 +183,41 @@ export default function DoctorPage() {
           </div>
 
           {/* Sidebar - Up Next List */}
-          <div className="lg:col-span-4 flex flex-col gap-8">
-            <section className="neumorphic p-8 rounded-[3rem] flex-1">
-              <h3 className="font-headline font-bold text-xl mb-6 flex items-center gap-3">
-                <Users size={24} className="text-primary" />
+          <div className="lg:col-span-4 flex flex-col gap-10">
+            <section className="neu-glass p-10 rounded-[3.5rem] flex-1 border-white/5">
+              <h3 className="font-headline font-bold text-2xl mb-10 flex items-center gap-4 text-primary">
+                <Users size={32} />
                 Next Up
               </h3>
-              <div className="space-y-4">
-                {waitingPatients.slice(0, 5).map((p, idx) => (
-                  <div key={p.id} className="p-5 rounded-[1.5rem] bg-secondary/30 border border-border/50 flex items-center justify-between group">
-                    <div className="flex items-center gap-5">
-                      <div className="text-lg font-black text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity">#{p.token_number}</div>
-                      <div className="font-headline font-bold text-xl">{p.name}</div>
+              <div className="space-y-6">
+                {waitingPatients.slice(0, 6).map((p, idx) => (
+                  <div key={p.id} className="p-7 rounded-[2rem] glass-card border-white/5 flex items-center justify-between group hover:border-primary/40 transition-all duration-300">
+                    <div className="flex items-center gap-6">
+                      <div className="text-xl font-black text-muted-foreground opacity-30 group-hover:opacity-100 transition-opacity">#{p.token_number}</div>
+                      <div className="font-headline font-bold text-2xl">{p.name}</div>
                     </div>
-                    {idx === 0 && <Badge className="bg-primary text-primary-foreground border-none font-bold py-1 px-3">NEXT</Badge>}
+                    {idx === 0 && <Badge className="bg-primary text-primary-foreground border-none font-black py-2 px-5 rounded-full shadow-lg">NEXT</Badge>}
                   </div>
                 ))}
                 {waitingPatients.length === 0 && (
-                  <div className="py-20 text-center space-y-4 opacity-30">
-                    <CheckCircle2 size={48} className="mx-auto" />
-                    <p className="italic font-bold tracking-widest uppercase text-sm">Clear Queue</p>
+                  <div className="py-24 text-center space-y-6 opacity-20">
+                    <CheckCircle2 size={64} className="mx-auto" />
+                    <p className="italic font-black tracking-[0.3em] uppercase text-sm">Flow Clear</p>
                   </div>
                 )}
-                {waitingPatients.length > 5 && (
-                  <p className="text-center text-xs font-bold text-muted-foreground uppercase py-4 border-t border-dashed mt-4">
-                    + {waitingPatients.length - 5} More Pending
-                  </p>
+                {waitingPatients.length > 6 && (
+                  <div className="pt-6 border-t border-dashed border-white/10 mt-6 text-center">
+                    <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                      + {waitingPatients.length - 6} Additional Pending
+                    </p>
+                  </div>
                 )}
               </div>
             </section>
 
-            <Button variant="outline" className="h-20 rounded-[2rem] border-2 font-headline font-bold text-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-              <LogOut size={24} />
-              End Clinical Shift
+            <Button variant="outline" className="h-24 rounded-[2.5rem] border-2 border-white/5 glass-card font-headline font-bold text-2xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-all active:scale-95">
+              <LogOut size={28} className="mr-4" />
+              Sign Off
             </Button>
           </div>
         </div>

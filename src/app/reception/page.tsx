@@ -14,7 +14,6 @@ import {
   User, 
   Clock, 
   Users, 
-  SkipForward, 
   Activity,
   Trash2,
   RefreshCcw,
@@ -114,43 +113,43 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8" suppressHydrationWarning>
+    <div className="min-h-screen bg-[#020617] p-4 md:p-8" suppressHydrationWarning>
       <ConnectionSentry />
       
-      <div className="max-w-7xl mx-auto space-y-8">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-primary/10 text-primary neumorphic">
-              <Activity size={28} />
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 neu-glass p-8 rounded-[2.5rem]">
+          <div className="flex items-center gap-5">
+            <div className="p-4 rounded-[1.5rem] bg-primary/10 text-primary border border-primary/20 glow-blue">
+              <Activity size={32} />
             </div>
             <div>
-              <h1 className="text-3xl font-headline font-bold tracking-tight">Reception Desk</h1>
-              <p className="text-muted-foreground text-sm flex items-center gap-2">
-                {queueLoading && <RefreshCcw size={12} className="animate-spin" />}
-                {waitingPatients.length} Active Patients • Prof. Clinic Suite
+              <h1 className="text-3xl md:text-4xl font-headline font-bold tracking-tight">Reception Console</h1>
+              <p className="text-muted-foreground text-sm flex items-center gap-2 font-bold uppercase tracking-widest mt-1">
+                {queueLoading ? <RefreshCcw size={14} className="animate-spin" /> : <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />}
+                {waitingPatients.length} Active in Queue
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="neumorphic py-3 px-6 rounded-2xl flex items-center gap-3 bg-card/50">
-              <Clock className="text-accent" size={20} />
+          <div className="flex items-center gap-6">
+            <div className="glass-card py-4 px-6 rounded-2xl flex items-center gap-4">
+              <Clock className="text-accent" size={24} />
               <div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Flow Speed</p>
-                <p className="font-headline font-bold text-accent">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Avg Session</p>
+                <p className="font-headline font-bold text-2xl text-accent">
                   {Math.round((stats?.avg_consult_duration || 600000) / 60000)}m
                 </p>
               </div>
             </div>
-            <div className="neumorphic py-3 px-6 rounded-2xl flex items-center gap-3 bg-card/50">
-              <Users className="text-primary" size={20} />
+            <div className="glass-card py-4 px-6 rounded-2xl flex items-center gap-4">
+              <Users className="text-primary" size={24} />
               <div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Intake Total</p>
-                <p className="font-headline font-bold text-primary">{stats?.total_patients_today || 0}</p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Total Daily</p>
+                <p className="font-headline font-bold text-2xl text-primary">{stats?.total_patients_today || 0}</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearQueue} className="rounded-2xl h-12 w-12 text-muted-foreground hover:text-destructive">
-              <Trash2 size={20} />
+            <Button variant="ghost" size="icon" onClick={clearQueue} className="rounded-2xl h-14 w-14 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all">
+              <Trash2 size={24} />
             </Button>
           </div>
         </header>
@@ -158,49 +157,48 @@ export default function ReceptionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Controls - Mobile First Column */}
           <div className="lg:col-span-4 space-y-8">
-            <section className="neumorphic p-8 rounded-[2.5rem] space-y-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Plus size={20} className="text-primary" />
-                <h2 className="text-xl font-headline font-bold">New Intake</h2>
+            <section className="neu-glass p-10 rounded-[3rem] space-y-8">
+              <div className="flex items-center gap-3">
+                <Plus size={24} className="text-primary" />
+                <h2 className="text-2xl font-headline font-bold">New Intake</h2>
               </div>
-              <form onSubmit={handleIntake} className="space-y-4">
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+              <form onSubmit={handleIntake} className="space-y-6">
+                <div className="relative group">
+                  <User className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
                   <Input 
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     placeholder="Patient Legal Name"
-                    className="pl-12 h-16 bg-secondary/50 border-none rounded-2xl neumorphic-inset text-lg"
-                    suppressHydrationWarning
+                    className="pl-14 h-20 bg-secondary/30 border-white/5 rounded-[1.5rem] neumorphic-inset text-xl focus:ring-primary/50"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl font-headline font-bold text-xl bg-primary hover:bg-primary/90 glow-blue shadow-lg">
-                  Register & Assign Token
+                <Button type="submit" disabled={loading} className="w-full h-20 rounded-[1.5rem] font-headline font-bold text-2xl bg-primary hover:bg-primary/90 glow-blue shadow-2xl transition-all active:scale-95">
+                  Add to Queue
                 </Button>
               </form>
             </section>
 
             {/* Current Session Summary */}
-            <section className="neumorphic p-8 rounded-[2.5rem] bg-gradient-to-br from-card to-accent/5">
-              <h2 className="text-xl font-headline font-bold mb-6">Clinic Live</h2>
+            <section className="neu-glass p-10 rounded-[3rem] bg-gradient-to-br from-card via-card to-accent/10">
+              <h2 className="text-2xl font-headline font-bold mb-8">Now Serving</h2>
               <div className="space-y-6">
                 {activePatient ? (
-                  <div className="p-6 rounded-2xl bg-accent/10 border border-accent/20">
-                    <p className="text-xs font-bold uppercase tracking-widest text-accent mb-4 text-center">In Exam Room</p>
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-2xl bg-accent text-accent-foreground flex items-center justify-center font-black text-2xl">
+                  <div className="p-8 rounded-[2rem] glass-card border-accent/20 animate-in zoom-in-95 duration-500">
+                    <p className="text-xs font-black uppercase tracking-[0.3em] text-accent mb-6 text-center">Room 1 • Clinical Status</p>
+                    <div className="flex items-center gap-8">
+                      <div className="w-20 h-20 rounded-[1.5rem] bg-accent text-accent-foreground flex items-center justify-center font-black text-4xl shadow-xl">
                         #{activePatient.token_number}
                       </div>
                       <div>
-                        <p className="font-headline font-bold text-2xl">{activePatient.name}</p>
-                        <p className="text-xs text-muted-foreground font-bold uppercase mt-1">Room 1 • Started {new Date(activePatient.called_at || activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="font-headline font-bold text-3xl">{activePatient.name}</p>
+                        <p className="text-sm text-muted-foreground font-bold uppercase mt-2">Started {new Date(activePatient.called_at || activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="py-12 text-center opacity-30 border-2 border-dashed border-border/50 rounded-2xl">
-                    <Clock size={40} className="mx-auto mb-2" />
-                    <p className="text-sm font-bold uppercase tracking-widest">No Active Consult</p>
+                  <div className="py-20 text-center opacity-30 border-2 border-dashed border-white/10 rounded-[2rem]">
+                    <Clock size={48} className="mx-auto mb-4" />
+                    <p className="text-lg font-bold uppercase tracking-widest italic">Room Currently Idle</p>
                   </div>
                 )}
               </div>
@@ -209,47 +207,47 @@ export default function ReceptionPage() {
 
           {/* List - Desktop/Full View Column */}
           <div className="lg:col-span-8 flex flex-col gap-6">
-            <section className="neumorphic rounded-[2.5rem] flex-1 flex flex-col overflow-hidden bg-card/30">
-              <div className="p-8 border-b border-border/50 flex flex-col md:flex-row gap-6 md:items-center justify-between">
+            <section className="neu-glass rounded-[3rem] flex-1 flex flex-col overflow-hidden">
+              <div className="p-10 border-b border-white/5 flex flex-col md:flex-row gap-8 md:items-center justify-between bg-white/[0.02]">
                 <div>
-                  <h2 className="text-2xl font-headline font-bold">Waiting Repository</h2>
-                  <p className="text-muted-foreground text-sm font-medium">{waitingPatients.length} patients currently tracked</p>
+                  <h2 className="text-3xl font-headline font-bold">Waiting Repository</h2>
+                  <p className="text-muted-foreground text-base font-bold uppercase tracking-widest mt-1">{waitingPatients.length} Active Records</p>
                 </div>
-                <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <div className="relative w-full md:w-80">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                   <Input 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Find patient..."
-                    className="pl-10 h-10 bg-secondary/30 border-none rounded-xl"
+                    placeholder="Search patients..."
+                    className="pl-14 h-14 bg-secondary/50 border-white/5 rounded-[1.25rem] neumorphic-inset text-lg"
                   />
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto min-h-[500px] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto min-h-[600px] custom-scrollbar">
                 {waitingPatients.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center space-y-4 py-32 opacity-20">
-                    <Users size={64} />
-                    <p className="text-xl font-headline font-bold italic tracking-widest uppercase">No Records Found</p>
+                  <div className="h-full flex flex-col items-center justify-center space-y-6 py-48 opacity-20">
+                    <Users size={80} />
+                    <p className="text-2xl font-headline font-bold italic tracking-[0.4em] uppercase">No Patients Pending</p>
                   </div>
                 ) : (
-                  <div className="p-8 grid grid-cols-1 gap-4">
+                  <div className="p-10 grid grid-cols-1 gap-6">
                     {waitingPatients.map((p, idx) => (
-                      <div key={p.id} className="neumorphic-inset p-6 rounded-2xl flex items-center justify-between group hover:bg-primary/[0.03] transition-all border border-transparent hover:border-primary/10">
-                        <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center font-headline font-bold text-xl text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                      <div key={p.id} className="glass-card p-8 rounded-[2rem] flex items-center justify-between group hover:bg-primary/10 transition-all duration-300 border-white/5 hover:border-primary/30">
+                        <div className="flex items-center gap-8">
+                          <div className="w-16 h-16 rounded-[1.25rem] bg-secondary border border-white/5 flex items-center justify-center font-headline font-bold text-2xl text-muted-foreground group-hover:text-primary group-hover:border-primary/20 transition-all">
                             #{p.token_number}
                           </div>
                           <div>
-                            <p className="font-headline font-bold text-2xl">{p.name}</p>
-                            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">Checked in {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="font-headline font-bold text-3xl group-hover:translate-x-1 transition-transform">{p.name}</p>
+                            <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.2em] mt-2 italic">Intake Time: {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge variant="outline" className="rounded-lg px-3 py-1 font-bold border-primary/20 text-primary uppercase">
-                            Waiting
+                        <div className="flex flex-col items-end gap-3">
+                          <Badge variant="outline" className="rounded-xl px-5 py-2 font-black border-primary/30 text-primary uppercase tracking-widest glass">
+                            PENDING
                           </Badge>
-                          <p className="text-[10px] text-muted-foreground font-black uppercase">Position {idx + 1}</p>
+                          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">Position #{idx + 1}</p>
                         </div>
                       </div>
                     ))}
@@ -262,14 +260,19 @@ export default function ReceptionPage() {
       </div>
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--secondary));
-          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 20px;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.1);
         }
       `}</style>
     </div>
