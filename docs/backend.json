@@ -1,0 +1,41 @@
+
+{
+  "entities": {
+    "QueueItem": {
+      "title": "Queue Item",
+      "description": "A patient in the clinic queue.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "token_number": { "type": "number" },
+        "status": { "type": "string", "enum": ["waiting", "active", "completed", "no-show"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "called_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "token_number", "status", "created_at"]
+    },
+    "ClinicStats": {
+      "title": "Clinic Statistics",
+      "description": "Global metrics for the clinic flow.",
+      "type": "object",
+      "properties": {
+        "avg_consult_duration": { "type": "number", "description": "Average duration in ms" },
+        "total_patients_today": { "type": "number" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["anonymous"]
+  },
+  "firestore": {
+    "/queues/{queueId}": {
+      "schema": "QueueItem",
+      "description": "Real-time list of patients."
+    },
+    "/metrics/clinic_stats": {
+      "schema": "ClinicStats",
+      "description": "Singleton document for clinic analytics."
+    }
+  }
+}

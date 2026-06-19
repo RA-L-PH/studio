@@ -1,23 +1,16 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { 
-  db 
-} from "@/lib/firebase";
+import { useState, useMemo, useRef } from "react";
 import { 
   collection, 
-  onSnapshot, 
   query, 
   where, 
   orderBy, 
-  addDoc, 
   serverTimestamp, 
   doc, 
   runTransaction, 
-  getDoc,
-  limit,
-  updateDoc
+  limit
 } from "firebase/firestore";
 import { 
   Plus, 
@@ -26,8 +19,6 @@ import {
   Users, 
   SkipForward, 
   Undo, 
-  Volume2, 
-  AlertCircle,
   Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +26,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
+import { useFirestore, useCollection, useDoc } from "@/firebase";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface Patient {
   id: string;
@@ -46,199 +40,154 @@ interface Patient {
 }
 
 export default function ReceptionPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [lastCompletedId, setLastCompletedId] = useState<string | null>(null);
-  const [showUndo, setShowUndo] = useState(false);
-  const [nameInput, setNameInput] = useState("");
-  const [stats, setStats] = useState({ avg_consult_duration: 600000, total_patients_today: 0 });
-  const [loading, setLoading] = useState(false);
-  
+  const db = useFirestore();
   const { toast } = useToast();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [nameInput, setNameInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showUndo, setShowUndo] = useState(false);
+  const [lastCompletedId, setLastCompletedId] = useState<string | null>(null);
+  
+  const waitingQuery = useMemo(() => query(
+    collection(db, "queues"), 
+    where("status", "==", "waiting"), 
+    orderBy("token_number", "asc")
+  ), [db]);
+  const { data: waitingPatients } = useCollection<Patient>(waitingQuery);
 
-  useEffect(() => {
-    // Initial audio setup for "Ping"
-    audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+  const activeQuery = useMemo(() => query(
+    collection(db, "queues"), 
+    where("status", "==", "active"),
+    limit(1)
+  ), [db]);
+  const { data: activePatients } = useCollection<Patient>(activeQuery);
+  const activePatient = activePatients[0] || null;
 
-    // Real-time listener for waiting patients
-    const q = query(
-      collection(db, "queues"), 
-      where("status", "==", "waiting"), 
-      orderBy("token_number", "asc")
-    );
-    const unsubscribeWaiting = onSnapshot(q, (snapshot) => {
-      setPatients(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Patient)));
-    });
-
-    // Real-time listener for active patient
-    const activeQ = query(
-      collection(db, "queues"), 
-      where("status", "==", "active"),
-      limit(1)
-    );
-    const unsubscribeActive = onSnapshot(activeQ, (snapshot) => {
-      if (!snapshot.empty) {
-        setActivePatient({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Patient);
-      } else {
-        setActivePatient(null);
-      }
-    });
-
-    // Metrics listener
-    const metricsRef = doc(db, "metrics", "clinic_stats");
-    const unsubscribeMetrics = onSnapshot(metricsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setStats(snapshot.data() as any);
-      }
-    });
-
-    return () => {
-      unsubscribeWaiting();
-      unsubscribeActive();
-      unsubscribeMetrics();
-    };
-  }, []);
-
-  const playPing = () => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {});
-    }
-  };
+  const metricsRef = useMemo(() => doc(db, "metrics", "clinic_stats"), [db]);
+  const { data: stats } = useDoc<{ avg_consult_duration: number; total_patients_today: number }>(metricsRef);
 
   const handleIntake = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
 
-    try {
-      setLoading(true);
-      const metricsRef = doc(db, "metrics", "clinic_stats");
+    setLoading(true);
+    const newPatientRef = doc(collection(db, "queues"));
+    const patientName = nameInput;
+
+    runTransaction(db, async (transaction) => {
+      const metricsDoc = await transaction.get(metricsRef);
+      let nextToken = 1;
       
-      await runTransaction(db, async (transaction) => {
-        const metricsDoc = await transaction.get(metricsRef);
-        let nextToken = 1;
-        
-        if (metricsDoc.exists()) {
-          nextToken = (metricsDoc.data().total_patients_today || 0) + 1;
-        }
+      if (metricsDoc.exists()) {
+        nextToken = (metricsDoc.data().total_patients_today || 0) + 1;
+      }
 
-        const newPatientRef = doc(collection(db, "queues"));
-        transaction.set(newPatientRef, {
-          name: nameInput,
-          token_number: nextToken,
-          status: "waiting",
-          created_at: serverTimestamp()
-        });
-
-        transaction.set(metricsRef, {
-          ...metricsDoc.data(),
-          total_patients_today: nextToken
-        }, { merge: true });
+      transaction.set(newPatientRef, {
+        name: patientName,
+        token_number: nextToken,
+        status: "waiting",
+        created_at: serverTimestamp()
       });
 
+      transaction.set(metricsRef, {
+        total_patients_today: nextToken
+      }, { merge: true });
+    }).then(() => {
       setNameInput("");
-      toast({ title: "Patient Added", description: `${nameInput} is in the queue.` });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Intake Error", description: "Could not add patient." });
-    } finally {
-      setLoading(false);
-    }
+      toast({ title: "Patient Added", description: `${patientName} is in the queue.` });
+    }).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: metricsRef.path,
+        operation: 'write',
+        requestResourceData: { name: patientName }
+      }));
+    }).finally(() => setLoading(false));
   };
 
   const handleCallNext = async () => {
-    try {
-      setLoading(true);
-      const metricsRef = doc(db, "metrics", "clinic_stats");
-      
-      await runTransaction(db, async (transaction) => {
-        // 1. Complete current active patient
-        if (activePatient) {
-          const currentActiveRef = doc(db, "queues", activePatient.id);
-          const now = Date.now();
-          const startTime = activePatient.called_at?.toMillis() || activePatient.created_at.toMillis();
-          const duration = now - startTime;
+    if (waitingPatients.length === 0) return;
+    setLoading(true);
 
-          transaction.update(currentActiveRef, { 
-            status: "completed",
-            completed_at: serverTimestamp() 
-          });
+    runTransaction(db, async (transaction) => {
+      // Complete active
+      if (activePatient) {
+        const now = Date.now();
+        const startTime = activePatient.called_at?.toMillis() || activePatient.created_at?.toMillis() || now;
+        const duration = now - startTime;
 
-          // 2. Update metrics (Rolling Average)
-          const metricsDoc = await transaction.get(metricsRef);
-          if (metricsDoc.exists()) {
-            const currentAvg = metricsDoc.data().avg_consult_duration || 600000;
-            const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
-            transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
-          }
-        }
+        transaction.update(doc(db, "queues", activePatient.id), { 
+          status: "completed",
+          completed_at: serverTimestamp() 
+        });
 
-        // 3. Find and activate next waiting patient
-        const waitingQ = query(
-          collection(db, "queues"), 
-          where("status", "==", "waiting"), 
-          orderBy("token_number", "asc"),
-          limit(1)
-        );
-        const waitingSnapshot = await getDoc(doc(db, "queues", patients[0]?.id || "dummy"));
-        
-        if (patients.length > 0) {
-          const nextPatient = patients[0];
-          const nextRef = doc(db, "queues", nextPatient.id);
-          transaction.update(nextRef, { 
-            status: "active",
-            called_at: serverTimestamp()
-          });
-          playPing();
-          
-          if (activePatient) {
-            setLastCompletedId(activePatient.id);
-            setShowUndo(true);
-            setTimeout(() => setShowUndo(false), 30000);
-          }
-        }
+        const currentAvg = stats?.avg_consult_duration || 600000;
+        const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
+        transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
+      }
+
+      // Activate next
+      const nextPatient = waitingPatients[0];
+      transaction.update(doc(db, "queues", nextPatient.id), { 
+        status: "active",
+        called_at: serverTimestamp()
       });
-    } catch (error) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Error", description: "Action failed." });
-    } finally {
-      setLoading(false);
-    }
+    }).then(() => {
+      if (activePatient) {
+        setLastCompletedId(activePatient.id);
+        setShowUndo(true);
+        setTimeout(() => setShowUndo(false), 30000);
+      }
+    }).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: 'queues_transaction',
+        operation: 'write'
+      }));
+    }).finally(() => setLoading(false));
   };
 
   const handleNoShow = async () => {
     if (!activePatient) return;
-    try {
-      setLoading(true);
-      await updateDoc(doc(db, "queues", activePatient.id), { status: "no-show" });
-      handleCallNext();
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to skip patient." });
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const ref = doc(db, "queues", activePatient.id);
+    
+    runTransaction(db, async (transaction) => {
+      transaction.update(ref, { status: "no-show" });
+      if (waitingPatients.length > 0) {
+        const nextPatient = waitingPatients[0];
+        transaction.update(doc(db, "queues", nextPatient.id), { 
+          status: "active",
+          called_at: serverTimestamp()
+        });
+      }
+    }).catch(() => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: ref.path,
+        operation: 'update'
+      }));
+    }).finally(() => setLoading(false));
   };
 
   const handleUndo = async () => {
     if (!lastCompletedId) return;
-    try {
-      setLoading(true);
-      await runTransaction(db, async (transaction) => {
-        const currentActive = activePatient ? doc(db, "queues", activePatient.id) : null;
-        const lastCompleted = doc(db, "queues", lastCompletedId);
+    setLoading(true);
+    
+    runTransaction(db, async (transaction) => {
+      const currentActiveRef = activePatient ? doc(db, "queues", activePatient.id) : null;
+      const lastCompletedRef = doc(db, "queues", lastCompletedId);
 
-        if (currentActive) {
-          transaction.update(currentActive, { status: "waiting", called_at: null });
-        }
-        transaction.update(lastCompleted, { status: "active", completed_at: null });
-      });
+      if (currentActiveRef) {
+        transaction.update(currentActiveRef, { status: "waiting", called_at: null });
+      }
+      transaction.update(lastCompletedRef, { status: "active", completed_at: null });
+    }).then(() => {
       setShowUndo(false);
       setLastCompletedId(null);
-      toast({ title: "Action Undone", description: "Previous patient state restored." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Undo Failed" });
-    } finally {
-      setLoading(false);
-    }
+      toast({ title: "Action Undone" });
+    }).catch(() => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: 'undo_transaction',
+        operation: 'write'
+      }));
+    }).finally(() => setLoading(false));
   };
 
   return (
@@ -252,7 +201,7 @@ export default function ReceptionPage() {
           </div>
           <div>
             <h1 className="text-3xl font-headline font-bold">Reception Portal</h1>
-            <p className="text-muted-foreground">Managing {patients.length} patients waiting</p>
+            <p className="text-muted-foreground">Managing {waitingPatients.length} patients waiting</p>
           </div>
         </div>
 
@@ -262,7 +211,7 @@ export default function ReceptionPage() {
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Avg Consult</p>
               <p className="font-headline font-bold text-accent">
-                {Math.round(stats.avg_consult_duration / 60000)}m
+                {Math.round((stats?.avg_consult_duration || 600000) / 60000)}m
               </p>
             </div>
           </div>
@@ -270,16 +219,14 @@ export default function ReceptionPage() {
             <Users className="text-primary" size={20} />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Today Total</p>
-              <p className="font-headline font-bold text-primary">{stats.total_patients_today}</p>
+              <p className="font-headline font-bold text-primary">{stats?.total_patients_today || 0}</p>
             </div>
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Actions & Input */}
         <div className="lg:col-span-4 space-y-8">
-          {/* Intake Portal */}
           <section className="neumorphic p-6 rounded-[2rem] space-y-6">
             <div className="flex items-center gap-2 mb-4">
               <Plus size={20} className="text-primary" />
@@ -292,7 +239,7 @@ export default function ReceptionPage() {
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
                   placeholder="Patient Name"
-                  className="pl-12 h-14 bg-secondary/50 border-none rounded-2xl neumorphic-inset focus-visible:ring-1 focus-visible:ring-primary/30"
+                  className="pl-12 h-14 bg-secondary/50 border-none rounded-2xl neumorphic-inset"
                 />
               </div>
               <Button type="submit" disabled={loading} className="w-full h-14 rounded-2xl font-headline font-bold text-lg bg-primary hover:bg-primary/90 glow-blue">
@@ -301,33 +248,21 @@ export default function ReceptionPage() {
             </form>
           </section>
 
-          {/* Call Next Action */}
           <section className="neumorphic p-8 rounded-[2rem] bg-gradient-to-br from-card to-secondary/30 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Activity size={120} />
-            </div>
-            
             <div className="space-y-6 relative z-10">
               <h2 className="text-2xl font-headline font-bold">Transition Control</h2>
-              
               <div className="space-y-3">
                 <Button 
                   onClick={handleCallNext} 
-                  disabled={loading || patients.length === 0}
+                  disabled={loading || waitingPatients.length === 0}
                   className="w-full h-20 rounded-2xl font-headline font-bold text-xl bg-accent hover:bg-accent/90 text-accent-foreground flex items-center justify-center gap-3 glow-cyan neumorphic-button"
                 >
                   <SkipForward size={24} />
                   Call Next
                 </Button>
-                
                 {showUndo && (
-                  <Button 
-                    onClick={handleUndo}
-                    variant="outline"
-                    className="w-full h-12 rounded-xl border-dashed border-primary/30 bg-primary/5 text-primary flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2"
-                  >
-                    <Undo size={16} />
-                    Undo (Safety Buffer)
+                  <Button onClick={handleUndo} variant="outline" className="w-full h-12 rounded-xl border-dashed border-primary/30 animate-in fade-in slide-in-from-top-2">
+                    <Undo size={16} /> Undo
                   </Button>
                 )}
               </div>
@@ -336,9 +271,7 @@ export default function ReceptionPage() {
                 <div className="pt-4 border-t border-border/50">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Now Serving</span>
-                    <Button onClick={handleNoShow} variant="ghost" size="sm" className="text-destructive h-8 px-2 hover:bg-destructive/10">
-                      No-Show
-                    </Button>
+                    <Button onClick={handleNoShow} variant="ghost" size="sm" className="text-destructive h-8 px-2">No-Show</Button>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent font-bold text-lg">
@@ -346,9 +279,6 @@ export default function ReceptionPage() {
                     </div>
                     <div>
                       <p className="font-headline font-bold text-lg">{activePatient.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock size={12} /> Called at {activePatient.called_at?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -357,7 +287,6 @@ export default function ReceptionPage() {
           </section>
         </div>
 
-        {/* Right Column: Queue List */}
         <div className="lg:col-span-8">
           <section className="neumorphic rounded-[2rem] overflow-hidden">
             <div className="p-6 border-b border-border/50 flex justify-between items-center bg-card/50">
@@ -366,20 +295,16 @@ export default function ReceptionPage() {
                 Live Waiting List
               </h2>
               <Badge variant="outline" className="rounded-full px-3 py-1 font-medium border-primary/20 text-primary">
-                {patients.length} Pending
+                {waitingPatients.length} Pending
               </Badge>
             </div>
-            
             <div className="divide-y divide-border/30">
-              {patients.length === 0 ? (
+              {waitingPatients.length === 0 ? (
                 <div className="p-20 text-center space-y-4">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
-                    <Activity size={32} className="opacity-20" />
-                  </div>
                   <p className="text-muted-foreground italic">No patients are currently waiting.</p>
                 </div>
               ) : (
-                patients.map((p, idx) => (
+                waitingPatients.map((p, idx) => (
                   <div key={p.id} className="p-6 flex items-center justify-between group hover:bg-primary/[0.02] transition-colors">
                     <div className="flex items-center gap-6">
                       <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center font-headline font-bold text-muted-foreground group-hover:text-primary transition-colors">
@@ -390,16 +315,7 @@ export default function ReceptionPage() {
                         <p className="text-xs text-muted-foreground">Token #{p.token_number}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-8">
-                      <div className="hidden md:block text-right">
-                        <p className="text-xs uppercase tracking-tighter text-muted-foreground font-bold">Check-in</p>
-                        <p className="text-sm font-medium">{p.created_at?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                      </div>
-                      <Badge className="bg-primary/10 text-primary border-none rounded-lg px-3 py-1 font-bold">
-                        WAITING
-                      </Badge>
-                    </div>
+                    <Badge className="bg-primary/10 text-primary border-none rounded-lg px-3 py-1 font-bold">WAITING</Badge>
                   </div>
                 ))
               )}

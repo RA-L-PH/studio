@@ -1,10 +1,9 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { useMemo, useState, useEffect } from "react";
 import { 
   collection, 
-  onSnapshot, 
   query, 
   where, 
   orderBy, 
@@ -16,12 +15,12 @@ import {
   Clock, 
   Users, 
   BellRing, 
-  Zap,
   Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { explainWaitTimeFactors } from "@/ai/flows/explain-wait-time-factors";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
+import { useFirestore, useCollection, useDoc } from "@/firebase";
+import { explainWaitTimeFactors } from "@/ai/flows/explain-wait-time-factors";
 
 interface Patient {
   id: string;
@@ -31,78 +30,66 @@ interface Patient {
 }
 
 export default function PatientPage() {
-  const [waitingCount, setWaitingCount] = useState(0);
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [upNext, setUpNext] = useState<Patient[]>([]);
-  const [stats, setStats] = useState({ avg_consult_duration: 600000 });
+  const db = useFirestore();
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [loadingExpl, setLoadingExpl] = useState(false);
 
-  useEffect(() => {
-    // Waiting count
-    const qCount = query(collection(db, "queues"), where("status", "==", "waiting"));
-    const unsubCount = onSnapshot(qCount, (snap) => setWaitingCount(snap.size));
+  const waitingQuery = useMemo(() => query(
+    collection(db, "queues"), 
+    where("status", "==", "waiting")
+  ), [db]);
+  const { data: waitingData } = useCollection(waitingQuery);
+  const waitingCount = waitingData.length;
 
-    // Active patient
-    const qActive = query(collection(db, "queues"), where("status", "==", "active"), limit(1));
-    const unsubActive = onSnapshot(qActive, (snap) => {
-      if (!snap.empty) {
-        setActivePatient({ id: snap.docs[0].id, ...snap.docs[0].data() } as Patient);
-      } else {
-        setActivePatient(null);
-      }
-    });
+  const activeQuery = useMemo(() => query(
+    collection(db, "queues"), 
+    where("status", "==", "active"), 
+    limit(1)
+  ), [db]);
+  const { data: activeData } = useCollection<Patient>(activeQuery);
+  const activePatient = activeData[0] || null;
 
-    // Up next list (top 3)
-    const qNext = query(collection(db, "queues"), where("status", "==", "waiting"), orderBy("token_number", "asc"), limit(3));
-    const unsubNext = onSnapshot(qNext, (snap) => {
-      setUpNext(snap.docs.map(d => ({ id: d.id, ...d.data() } as Patient)));
-    });
+  const nextQuery = useMemo(() => query(
+    collection(db, "queues"), 
+    where("status", "==", "waiting"), 
+    orderBy("token_number", "asc"), 
+    limit(3)
+  ), [db]);
+  const { data: upNext } = useCollection<Patient>(nextQuery);
 
-    // Metrics
-    const unsubMetrics = onSnapshot(doc(db, "metrics", "clinic_stats"), (snap) => {
-      if (snap.exists()) setStats(snap.data() as any);
-    });
+  const statsRef = useMemo(() => doc(db, "metrics", "clinic_stats"), [db]);
+  const { data: stats } = useDoc<{ avg_consult_duration: number }>(statsRef);
 
-    return () => {
-      unsubCount();
-      unsubActive();
-      unsubNext();
-      unsubMetrics();
-    };
-  }, []);
+  const avgDur = stats?.avg_consult_duration || 600000;
+  const totalEstimatedWait = Math.round((waitingCount * avgDur) / 60000);
 
-  // Explanation Trigger
   useEffect(() => {
     async function getExplanation() {
       if (waitingCount === 0) {
         setExplanation("No current wait time. Walk-ins available.");
         return;
       }
-      setLoadingExplanation(true);
+      setLoadingExpl(true);
       try {
         const result = await explainWaitTimeFactors({
           numPatientsInQueue: waitingCount,
-          averageConsultationDurationMs: stats.avg_consult_duration
+          averageConsultationDurationMs: avgDur
         });
         setExplanation(result.explanation);
       } catch (e) {
-        setExplanation("Unable to calculate dynamic wait time.");
+        setExplanation("Analyzing clinic flow factors...");
       } finally {
-        setLoadingExplanation(false);
+        setLoadingExpl(false);
       }
     }
     const timer = setTimeout(getExplanation, 500);
     return () => clearTimeout(timer);
-  }, [waitingCount, stats.avg_consult_duration]);
-
-  const totalEstimatedWait = Math.round((waitingCount * stats.avg_consult_duration) / 60000);
+  }, [waitingCount, avgDur]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <ConnectionSentry />
       
-      {/* Header */}
       <header className="p-6 border-b border-border/50 bg-card/30 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -114,15 +101,11 @@ export default function PatientPage() {
       </header>
 
       <main className="flex-1 p-6 space-y-8 max-w-xl mx-auto w-full">
-        
-        {/* Active Patient Hero Card */}
         <section className="neumorphic p-8 rounded-[2.5rem] bg-gradient-to-br from-primary/10 via-card to-card relative overflow-hidden text-center">
           <div className="absolute top-0 right-0 p-4 animate-pulse">
             <BellRing size={24} className="text-accent" />
           </div>
-          
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-6">Currently Serving</p>
-          
           {activePatient ? (
             <div className="space-y-4">
               <h2 className="text-6xl font-headline font-bold text-accent drop-shadow-[0_0_10px_rgba(23,206,164,0.3)]">
@@ -142,41 +125,28 @@ export default function PatientPage() {
           )}
         </section>
 
-        {/* Wait Time Tool */}
         <section className="neumorphic p-6 rounded-[2rem] space-y-4 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-primary font-headline font-bold">
-              <Clock size={18} />
-              ESTIMATED WAIT
+              <Clock size={18} /> ESTIMATED WAIT
             </div>
             <div className="text-2xl font-headline font-bold">
               ~{totalEstimatedWait} <span className="text-sm text-muted-foreground font-normal">MINS</span>
             </div>
           </div>
-          
           <div className="p-4 rounded-xl bg-secondary/30 text-sm leading-relaxed text-muted-foreground relative">
-            {loadingExplanation ? (
-              <div className="flex items-center gap-2 animate-pulse">
-                <div className="w-4 h-4 rounded-full bg-primary/20" />
-                <span>Analyzing clinic flow...</span>
-              </div>
-            ) : (
-              <p>{explanation}</p>
-            )}
+            {loadingExpl ? <span className="animate-pulse">Analyzing flow...</span> : <p>{explanation}</p>}
             <Info size={14} className="absolute bottom-2 right-2 opacity-20" />
           </div>
         </section>
 
-        {/* Up Next List */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-2">
             <h3 className="font-headline font-bold text-lg flex items-center gap-2">
-              <Users size={18} className="text-muted-foreground" />
-              Up Next
+              <Users size={18} className="text-muted-foreground" /> Up Next
             </h3>
             <span className="text-xs font-bold text-muted-foreground">{waitingCount} Waiting</span>
           </div>
-          
           <div className="space-y-3">
             {upNext.map((p, idx) => (
               <div key={p.id} className="neumorphic p-5 rounded-2xl flex items-center justify-between">
@@ -186,36 +156,22 @@ export default function PatientPage() {
                   </div>
                   <div>
                     <p className="font-headline font-bold">{p.name}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
-                      {idx === 0 ? "STAY NEARBY" : "EST. " + (idx + 1) * Math.round(stats.avg_consult_duration / 60000) + " MINS"}
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                      {idx === 0 ? "STAY NEARBY" : "EST. " + (idx + 1) * Math.round(avgDur / 60000) + " MINS"}
                     </p>
                   </div>
                 </div>
                 {idx === 0 && <Badge className="bg-primary/20 text-primary border-none rounded-lg">NEXT</Badge>}
               </div>
             ))}
-            
             {waitingCount > 3 && (
-              <div className="text-center py-4 text-xs text-muted-foreground font-bold tracking-widest bg-secondary/20 rounded-2xl border border-dashed border-border">
+              <div className="text-center py-4 text-xs text-muted-foreground font-bold bg-secondary/20 rounded-2xl border border-dashed">
                 + {waitingCount - 3} MORE PATIENTS IN QUEUE
-              </div>
-            )}
-            
-            {upNext.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground italic neumorphic rounded-2xl">
-                Queue is empty.
               </div>
             )}
           </div>
         </section>
       </main>
-
-      <footer className="p-8 text-center">
-        <div className="flex items-center justify-center gap-2 opacity-40">
-          <Activity size={14} />
-          <span className="text-[10px] uppercase tracking-[0.3em] font-bold">PulseQueue Monitoring System</span>
-        </div>
-      </footer>
     </div>
   );
 }
