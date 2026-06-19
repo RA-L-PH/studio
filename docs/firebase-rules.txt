@@ -1,17 +1,12 @@
-# PulseQueue Firebase Security Rules
+# PulseQueue Firebase Security Rules (MVP Version)
 
 ## Firestore Rules
 # Location: firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Patients and Queue Management
-    match /queues/{queueId} {
-      allow read, write: if true; // Public for MVP clinic flow
-    }
-    
-    // Clinic Statistics and Metrics
-    match /metrics/clinic_stats {
+    // Global permissive rules for MVP development
+    match /{document=**} {
       allow read, write: if true;
     }
   }
@@ -21,16 +16,12 @@ service cloud.firestore {
 # Apply these in the 'Rules' tab of the Realtime Database section in the Firebase Console.
 {
   "rules": {
-    ".read": false,
-    ".write": false,
-    "live_status": {
-      ".read": true,
-      ".write": true
-    }
+    ".read": "true",
+    ".write": "true"
   }
 }
 
 ## Implementation Notes:
-1. These rules are configured for an MVP where anonymous or public access is required for rapid testing.
-2. For production, 'allow read, write: if true' should be replaced with Auth-based checks (e.g., 'request.auth != null').
-3. Ensure you enable the Realtime Database in your Firebase Console to use the live ticker feature.
+1. These rules are configured for an MVP to allow public access for rapid testing.
+2. For production, replace '.read: true' and '.write: true' with auth-based checks (e.g., 'auth != null').
+3. Ensure you have initialized your Realtime Database in the Firebase Console.

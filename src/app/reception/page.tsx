@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -7,10 +6,7 @@ import {
   push, 
   set, 
   runTransaction, 
-  update,
-  query,
-  orderByChild,
-  equalTo
+  update
 } from "firebase/database";
 import { 
   Plus, 
@@ -43,11 +39,9 @@ export default function ReceptionPage() {
   const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Real-time metrics
   const statsRef = useMemo(() => ref(rtdb, "metrics"), [rtdb]);
   const { data: stats } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
 
-  // Real-time queue
   const queueRef = useMemo(() => ref(rtdb, "queues"), [rtdb]);
   const { data: allPatients } = useRTList<Patient>(queueRef);
 
@@ -68,9 +62,8 @@ export default function ReceptionPage() {
 
     setLoading(true);
     try {
-      // Use transaction to get the next token number atomically
       const { snapshot } = await runTransaction(statsRef, (currentData) => {
-        if (currentData === null) {
+        if (!currentData) {
           return { total_patients_today: 1, avg_consult_duration: 600000 };
         }
         return {
@@ -109,12 +102,10 @@ export default function ReceptionPage() {
     try {
       const updates: any = {};
       
-      // Complete current active patient
       if (activePatient) {
         updates[`queues/${activePatient.id}/status`] = "completed";
         updates[`queues/${activePatient.id}/completed_at`] = now;
         
-        // Simple moving average for duration
         const startTime = activePatient.called_at || activePatient.created_at;
         const duration = now - startTime;
         const currentAvg = stats?.avg_consult_duration || 600000;
@@ -122,11 +113,9 @@ export default function ReceptionPage() {
         updates[`metrics/avg_consult_duration`] = updatedAvg;
       }
 
-      // Activate next patient
       updates[`queues/${nextPatient.id}/status`] = "active";
       updates[`queues/${nextPatient.id}/called_at`] = now;
 
-      // Update Live Ticker
       updates[`live_status`] = {
         token: nextPatient.token_number,
         name: nextPatient.name,
@@ -217,7 +206,7 @@ export default function ReceptionPage() {
         <div className="lg:col-span-4 space-y-8">
           <section className="neumorphic p-6 rounded-[2rem] space-y-6">
             <div className="flex items-center gap-2 mb-4">
-              < Plus size={20} className="text-primary" />
+              <Plus size={20} className="text-primary" />
               <h2 className="text-xl font-headline font-bold">Rapid Intake</h2>
             </div>
             <form onSubmit={handleIntake} className="space-y-4">
