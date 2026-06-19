@@ -1,20 +1,15 @@
 
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
-import { signInAnonymously } from 'firebase/auth';
+import React, { useMemo } from 'react';
 import { initializeFirebase } from './index';
 import { FirebaseProvider } from './provider';
 
 export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
   const { app, db, auth, rtdb } = useMemo(() => initializeFirebase(), []);
 
-  useEffect(() => {
-    // Ensure we have an anonymous session for writes
-    signInAnonymously(auth).catch(err => {
-      console.error("Anonymous Auth Failed:", err);
-    });
-  }, [auth]);
+  // Removed automatic anonymous sign-in to avoid auth/admin-restricted-operation errors 
+  // on projects where Anonymous Auth is not yet enabled in the console.
 
   return (
     <FirebaseProvider app={app} db={db} auth={auth} rtdb={rtdb}>

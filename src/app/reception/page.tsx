@@ -3,66 +3,63 @@
 
 import { useState, useMemo } from "react";
 import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp, 
-  doc, 
+  ref, 
+  push, 
+  set, 
   runTransaction, 
-  limit
-} from "firebase/firestore";
-import { ref, set } from "firebase/database";
+  update,
+  query,
+  orderByChild,
+  equalTo
+} from "firebase/database";
 import { 
   Plus, 
   User, 
   Clock, 
   Users, 
   SkipForward, 
-  Undo, 
-  Activity
+  Activity,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
-import { useFirestore, useRTDB, useCollection, useDoc } from "@/firebase";
+import { useRTDB, useRTValue, useRTList } from "@/firebase";
 
 interface Patient {
   id: string;
   name: string;
   token_number: number;
   status: "waiting" | "active" | "completed" | "no-show";
-  created_at: any;
-  called_at?: any;
+  created_at: number;
+  called_at?: number;
 }
 
 export default function ReceptionPage() {
-  const db = useFirestore();
   const rtdb = useRTDB();
   const { toast } = useToast();
   const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showUndo, setShowUndo] = useState(false);
   
-  const waitingQuery = useMemo(() => query(
-    collection(db, "queues"), 
-    where("status", "==", "waiting"), 
-    orderBy("token_number", "asc")
-  ), [db]);
-  const { data: waitingPatients } = useCollection<Patient>(waitingQuery);
+  // Real-time metrics
+  const statsRef = useMemo(() => ref(rtdb, "metrics"), [rtdb]);
+  const { data: stats } = useRTValue<{ avg_consult_duration: number; total_patients_today: number }>(statsRef);
 
-  const activeQuery = useMemo(() => query(
-    collection(db, "queues"), 
-    where("status", "==", "active"),
-    limit(1)
-  ), [db]);
-  const { data: activePatients } = useCollection<Patient>(activeQuery);
-  const activePatient = activePatients[0] || null;
+  // Real-time queue
+  const queueRef = useMemo(() => ref(rtdb, "queues"), [rtdb]);
+  const { data: allPatients } = useRTList<Patient>(queueRef);
 
-  const metricsRef = useMemo(() => doc(db, "metrics", "clinic_stats"), [db]);
-  const { data: stats } = useDoc<{ avg_consult_duration: number; total_patients_today: number }>(metricsRef);
+  const waitingPatients = useMemo(() => 
+    allPatients
+      .filter(p => p.status === "waiting")
+      .sort((a, b) => a.token_number - b.token_number)
+  , [allPatients]);
+
+  const activePatient = useMemo(() => 
+    allPatients.find(p => p.status === "active") || null
+  , [allPatients]);
 
   const handleIntake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,40 +67,33 @@ export default function ReceptionPage() {
     if (!patientName) return;
 
     setLoading(true);
-    const newPatientRef = doc(collection(db, "queues"));
-
     try {
-      const token = await runTransaction(db, async (transaction) => {
-        const metricsDoc = await transaction.get(metricsRef);
-        const metricsData = metricsDoc.data() || {};
-        const totalToday = metricsData.total_patients_today || 0;
-        const nextToken = totalToday + 1;
+      // Use transaction to get the next token number atomically
+      const { snapshot } = await runTransaction(statsRef, (currentData) => {
+        if (currentData === null) {
+          return { total_patients_today: 1, avg_consult_duration: 600000 };
+        }
+        return {
+          ...currentData,
+          total_patients_today: (currentData.total_patients_today || 0) + 1
+        };
+      });
 
-        transaction.set(newPatientRef, {
-          name: patientName,
-          token_number: nextToken,
-          status: "waiting",
-          created_at: serverTimestamp()
-        });
-
-        transaction.set(metricsRef, {
-          total_patients_today: nextToken,
-          // Initialize avg duration if it's the first patient
-          avg_consult_duration: metricsData.avg_consult_duration || 600000 
-        }, { merge: true });
-
-        return nextToken;
+      const nextToken = snapshot.val().total_patients_today;
+      const newPatientRef = push(ref(rtdb, "queues"));
+      
+      await set(newPatientRef, {
+        name: patientName,
+        token_number: nextToken,
+        status: "waiting",
+        created_at: Date.now()
       });
 
       setNameInput("");
-      toast({ title: "Patient Added", description: `${patientName} is Token #${token}` });
+      toast({ title: "Patient Added", description: `${patientName} is Token #${nextToken}` });
     } catch (err: any) {
-      console.error("Intake Transaction Failed:", err);
-      toast({ 
-        variant: "destructive", 
-        title: "Intake Error", 
-        description: err.message || "Could not add patient. Please check Firebase console for rule violations." 
-      });
+      console.error("Intake Failed:", err);
+      toast({ variant: "destructive", title: "Intake Error", description: err.message });
     } finally {
       setLoading(false);
     }
@@ -114,46 +104,40 @@ export default function ReceptionPage() {
     setLoading(true);
 
     const nextPatient = waitingPatients[0];
+    const now = Date.now();
 
     try {
-      await runTransaction(db, async (transaction) => {
-        if (activePatient) {
-          const now = Date.now();
-          const startTime = activePatient.called_at?.toMillis() || activePatient.created_at?.toMillis() || now;
-          const duration = now - startTime;
+      const updates: any = {};
+      
+      // Complete current active patient
+      if (activePatient) {
+        updates[`queues/${activePatient.id}/status`] = "completed";
+        updates[`queues/${activePatient.id}/completed_at`] = now;
+        
+        // Simple moving average for duration
+        const startTime = activePatient.called_at || activePatient.created_at;
+        const duration = now - startTime;
+        const currentAvg = stats?.avg_consult_duration || 600000;
+        const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
+        updates[`metrics/avg_consult_duration`] = updatedAvg;
+      }
 
-          transaction.update(doc(db, "queues", activePatient.id), { 
-            status: "completed",
-            completed_at: serverTimestamp() 
-          });
+      // Activate next patient
+      updates[`queues/${nextPatient.id}/status`] = "active";
+      updates[`queues/${nextPatient.id}/called_at`] = now;
 
-          const currentAvg = stats?.avg_consult_duration || 600000;
-          const updatedAvg = (currentAvg * 0.7) + (duration * 0.3);
-          transaction.update(metricsRef, { avg_consult_duration: updatedAvg });
-        }
-
-        transaction.update(doc(db, "queues", nextPatient.id), { 
-          status: "active",
-          called_at: serverTimestamp()
-        });
-      });
-
-      await set(ref(rtdb, "live_status"), {
+      // Update Live Ticker
+      updates[`live_status`] = {
         token: nextPatient.token_number,
         name: nextPatient.name,
         room: "Room 1",
-        updated_at: Date.now()
-      });
+        updated_at: now
+      };
 
-      setShowUndo(true);
-      setTimeout(() => setShowUndo(false), 30000);
+      await update(ref(rtdb), updates);
+      toast({ title: "Patient Called", description: `Serving ${nextPatient.name} in Room 1` });
     } catch (err: any) {
-      console.error("Call Next Failed:", err);
-      toast({ 
-        variant: "destructive", 
-        title: "Transition Error", 
-        description: "Could not activate next patient. Error: " + err.message 
-      });
+      toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setLoading(false);
     }
@@ -162,14 +146,30 @@ export default function ReceptionPage() {
   const handleNoShow = async () => {
     if (!activePatient) return;
     setLoading(true);
-    
     try {
-      await runTransaction(db, async (transaction) => {
-        transaction.update(doc(db, "queues", activePatient.id), { status: "no-show" });
-      });
-      await set(ref(rtdb, "live_status"), null);
+      const updates: any = {};
+      updates[`queues/${activePatient.id}/status`] = "no-show";
+      updates[`live_status`] = null;
+      await update(ref(rtdb), updates);
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: "Failed: " + err.message });
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearQueue = async () => {
+    if (!confirm("Are you sure? This will reset the clinic for the day.")) return;
+    setLoading(true);
+    try {
+      await update(ref(rtdb), {
+        queues: null,
+        metrics: { total_patients_today: 0, avg_consult_duration: 600000 },
+        live_status: null
+      });
+      toast({ title: "Reset Complete", description: "All data cleared." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Reset Error", description: err.message });
     } finally {
       setLoading(false);
     }
@@ -207,6 +207,9 @@ export default function ReceptionPage() {
               <p className="font-headline font-bold text-primary">{stats?.total_patients_today || 0}</p>
             </div>
           </div>
+          <Button variant="ghost" size="icon" onClick={clearQueue} className="rounded-2xl h-full aspect-square text-muted-foreground hover:text-destructive">
+            <Trash2 size={20} />
+          </Button>
         </div>
       </header>
 
@@ -214,7 +217,7 @@ export default function ReceptionPage() {
         <div className="lg:col-span-4 space-y-8">
           <section className="neumorphic p-6 rounded-[2rem] space-y-6">
             <div className="flex items-center gap-2 mb-4">
-              <Plus size={20} className="text-primary" />
+              < Plus size={20} className="text-primary" />
               <h2 className="text-xl font-headline font-bold">Rapid Intake</h2>
             </div>
             <form onSubmit={handleIntake} className="space-y-4">
@@ -245,11 +248,6 @@ export default function ReceptionPage() {
                   <SkipForward size={24} />
                   Call Next
                 </Button>
-                {showUndo && (
-                  <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-primary/30 animate-in fade-in slide-in-from-top-2">
-                    <Undo size={16} /> History (Experimental)
-                  </Button>
-                )}
               </div>
 
               {activePatient && (

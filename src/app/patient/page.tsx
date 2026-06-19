@@ -2,14 +2,6 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  doc 
-} from "firebase/firestore";
 import { ref } from "firebase/database";
 import { 
   Activity, 
@@ -20,8 +12,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
-import { useFirestore, useRTDB, useCollection, useDoc, useRTValue } from "@/firebase";
-import { explainWaitTimeFactors } from "@/ai/flows/explain-wait-time-factors";
+import { useRTDB, useRTValue, useRTList } from "@/firebase";
 
 interface Patient {
   id: string;
@@ -38,59 +29,40 @@ interface LiveStatus {
 }
 
 export default function PatientPage() {
-  const db = useFirestore();
   const rtdb = useRTDB();
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [loadingExpl, setLoadingExpl] = useState(false);
 
   // RTDB for ultra-low latency "Now Serving"
   const liveStatusRef = useMemo(() => ref(rtdb, "live_status"), [rtdb]);
   const { data: liveStatus, loading: liveLoading } = useRTValue<LiveStatus>(liveStatusRef);
 
-  // Firestore for the full queue list and stats
-  const waitingQuery = useMemo(() => query(
-    collection(db, "queues"), 
-    where("status", "==", "waiting")
-  ), [db]);
-  const { data: waitingData } = useCollection(waitingQuery);
-  const waitingCount = waitingData.length;
+  // RTDB for full queue
+  const queueRef = useMemo(() => ref(rtdb, "queues"), [rtdb]);
+  const { data: allPatients } = useRTList<Patient>(queueRef);
 
-  const nextQuery = useMemo(() => query(
-    collection(db, "queues"), 
-    where("status", "==", "waiting"), 
-    orderBy("token_number", "asc"), 
-    limit(3)
-  ), [db]);
-  const { data: upNext } = useCollection<Patient>(nextQuery);
+  const waitingPatients = useMemo(() => 
+    allPatients
+      .filter(p => p.status === "waiting")
+      .sort((a, b) => a.token_number - b.token_number)
+  , [allPatients]);
 
-  const statsRef = useMemo(() => doc(db, "metrics", "clinic_stats"), [db]);
-  const { data: stats } = useDoc<{ avg_consult_duration: number }>(statsRef);
+  const upNext = waitingPatients.slice(0, 3);
+  const waitingCount = waitingPatients.length;
+
+  const statsRef = useMemo(() => ref(rtdb, "metrics"), [rtdb]);
+  const { data: stats } = useRTValue<{ avg_consult_duration: number }>(statsRef);
 
   const avgDur = stats?.avg_consult_duration || 600000;
   const totalEstimatedWait = Math.round((waitingCount * avgDur) / 60000);
 
   useEffect(() => {
-    async function getExplanation() {
-      if (waitingCount === 0) {
-        setExplanation("No current wait time. Walk-ins available.");
-        return;
-      }
-      setLoadingExpl(true);
-      try {
-        const result = await explainWaitTimeFactors({
-          numPatientsInQueue: waitingCount,
-          averageConsultationDurationMs: avgDur
-        });
-        setExplanation(result.explanation);
-      } catch (e) {
-        setExplanation("Analyzing clinic flow factors...");
-      } finally {
-        setLoadingExpl(false);
-      }
+    if (waitingCount === 0) {
+      setExplanation("No current wait time. Walk-ins available.");
+    } else {
+      const avgMins = Math.round(avgDur / 60000);
+      setExplanation(`There are ${waitingCount} patients waiting. With an average visit time of ${avgMins} minutes, your estimated wait is approximately ${totalEstimatedWait} minutes.`);
     }
-    const timer = setTimeout(getExplanation, 500);
-    return () => clearTimeout(timer);
-  }, [waitingCount, avgDur]);
+  }, [waitingCount, avgDur, totalEstimatedWait]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -145,7 +117,7 @@ export default function PatientPage() {
             </div>
           </div>
           <div className="p-4 rounded-xl bg-secondary/30 text-sm leading-relaxed text-muted-foreground relative">
-            {loadingExpl ? <span className="animate-pulse">Analyzing flow...</span> : <p>{explanation}</p>}
+            <p>{explanation}</p>
             <Info size={14} className="absolute bottom-2 right-2 opacity-20" />
           </div>
         </section>
@@ -177,6 +149,11 @@ export default function PatientPage() {
             {waitingCount > 3 && (
               <div className="text-center py-4 text-xs text-muted-foreground font-bold bg-secondary/20 rounded-2xl border border-dashed">
                 + {waitingCount - 3} MORE PATIENTS IN QUEUE
+              </div>
+            )}
+            {waitingCount === 0 && (
+              <div className="text-center py-12 text-muted-foreground italic neumorphic rounded-2xl">
+                No patients currently in queue.
               </div>
             )}
           </div>
