@@ -24,7 +24,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.3rem;
+    --radius: 0.2rem;
   }
 }
 
@@ -33,30 +33,32 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased overflow-x-hidden text-sm;
+    @apply bg-background text-foreground font-body antialiased overflow-hidden text-[11px];
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
   }
 }
 
-/* Minimalist Card Style - Light Theme */
+/* Minimalist Scaled Down Styling */
 .minimal-card {
-  @apply bg-card border border-border rounded-sm shadow-sm;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  @apply bg-card border border-border rounded-sm shadow-none;
 }
 
-.minimal-card:hover {
-  @apply border-primary/30 shadow-md;
-}
-
-/* Custom Scrollbar for Minimalist UI */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full;
+  @apply bg-muted-foreground/20 rounded-full;
+}
+
+/* Ensure full height layout utility */
+.full-viewport-layout {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
 }
