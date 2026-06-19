@@ -3,13 +3,16 @@
 
 import { useState, useEffect } from "react";
 import { WifiOff, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function ConnectionSentry() {
   const [isOnline, setIsOnline] = useState(true);
-  const [lastCheck, setLastCheck] = useState(Date.now());
+  const [lastCheck, setLastCheck] = useState<number | null>(null);
 
   useEffect(() => {
+    // Set initial values only on the client to avoid hydration mismatch
+    setIsOnline(window.navigator.onLine);
+    setLastCheck(Date.now());
+
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -27,7 +30,9 @@ export function ConnectionSentry() {
     };
   }, []);
 
-  if (isOnline) return null;
+  // Don't render anything if we haven't checked the connection on the client yet
+  // or if the user is online.
+  if (isOnline || lastCheck === null) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md">
