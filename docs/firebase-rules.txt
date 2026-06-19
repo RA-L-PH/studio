@@ -1,27 +1,32 @@
-# PulseQueue Firebase Security Rules (MVP Version)
+# PulseQueue Firebase Security Rules (RTDB Centric Version)
 
-## Firestore Rules
-# Location: firestore.rules
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Global permissive rules for MVP development
-    match /{document=**} {
-      allow read, write: if true;
+## Realtime Database Rules
+# APPLY THESE IN THE 'Rules' TAB OF THE REALTIME DATABASE SECTION IN THE FIREBASE CONSOLE.
+# Location: https://console.firebase.google.com/project/_/database/rules
+
+{
+  "rules": {
+    ".read": "true",
+    ".write": "true",
+    "queues": {
+      ".indexOn": ["token_number", "status"]
     }
   }
 }
 
-## Realtime Database Rules
-# Apply these in the 'Rules' tab of the Realtime Database section in the Firebase Console.
-{
-  "rules": {
-    ".read": "true",
-    ".write": "true"
+## Firestore Rules
+# Location: firestore.rules (Keep these locked as we have migrated to RTDB)
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
 
 ## Implementation Notes:
-1. These rules are configured for an MVP to allow public access for rapid testing.
-2. For production, replace '.read: true' and '.write: true' with auth-based checks (e.g., 'auth != null').
-3. Ensure you have initialized your Realtime Database in the Firebase Console.
+1. These RTDB rules are permissive (read/write: true) to ensure zero permission errors during your MVP development.
+2. In the Firebase Console, ensure you have initialized your Realtime Database in the same region as your project.
+3. The 'queues' indexing is added for better performance when the list grows.
+4. For production, replace global access with 'auth != null' or specific user-level checks.

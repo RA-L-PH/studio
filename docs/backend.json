@@ -3,21 +3,21 @@
   "entities": {
     "QueueItem": {
       "title": "Queue Item",
-      "description": "A patient in the clinic queue.",
+      "description": "A patient in the clinic queue (RTDB).",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
         "token_number": { "type": "number" },
         "status": { "type": "string", "enum": ["waiting", "active", "completed", "no-show"] },
-        "created_at": { "type": "string", "format": "date-time" },
-        "called_at": { "type": "string", "format": "date-time" },
-        "completed_at": { "type": "string", "format": "date-time" }
+        "created_at": { "type": "number" },
+        "called_at": { "type": "number" },
+        "completed_at": { "type": "number" }
       },
       "required": ["name", "token_number", "status", "created_at"]
     },
     "ClinicStats": {
       "title": "Clinic Statistics",
-      "description": "Global metrics for the clinic flow.",
+      "description": "Global metrics for the clinic flow (RTDB).",
       "type": "object",
       "properties": {
         "avg_consult_duration": { "type": "number", "description": "Average duration in ms" },
@@ -25,8 +25,8 @@
       }
     },
     "LiveStatus": {
-      "title": "Live Status (RTDB)",
-      "description": "Ultra-fast synchronization for currently serving patient.",
+      "title": "Live Status",
+      "description": "Ultra-fast synchronization for currently serving patient (RTDB).",
       "type": "object",
       "properties": {
         "token": { "type": "number" },
@@ -36,23 +36,18 @@
       }
     }
   },
-  "auth": {
-    "providers": ["anonymous"]
-  },
-  "firestore": {
-    "/queues/{queueId}": {
+  "realtime_db": {
+    "/queues": {
       "schema": "QueueItem",
-      "description": "Historical and pending queue data."
+      "description": "All patient queue data."
     },
-    "/metrics/clinic_stats": {
+    "/metrics": {
       "schema": "ClinicStats",
       "description": "Clinic analytics."
-    }
-  },
-  "realtime_db": {
+    },
     "/live_status": {
       "schema": "LiveStatus",
-      "description": "The 'Now Serving' ticker for the clinic."
+      "description": "The 'Now Serving' ticker."
     }
   }
 }
