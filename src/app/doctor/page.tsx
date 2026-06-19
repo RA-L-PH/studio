@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSentry } from "@/components/ConnectionSentry";
 import { useRTDB, useRTValue, useRTList } from "@/firebase";
+import { Badge } from "@/components/ui/badge";
 
 interface Patient {
   id: string;
@@ -91,54 +92,54 @@ export default function DoctorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 lg:p-12">
+    <div className="min-h-screen bg-background p-2">
       <ConnectionSentry />
       
-      <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 border border-border rounded-lg bg-card">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded bg-accent/10 text-accent border border-accent/20">
-              <Stethoscope size={24} />
+      <div className="w-full space-y-2">
+        <header className="flex items-center justify-between p-3 border border-border rounded-sm bg-card">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded bg-accent/10 text-accent border border-accent/20">
+              <Stethoscope size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-headline font-bold">Clinical Hub</h1>
-              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-0.5">Dr. Sterling • Room 1</p>
+              <h1 className="text-sm font-headline font-bold tracking-tight">Clinical Console</h1>
+              <p className="text-muted-foreground text-[8px] font-bold uppercase tracking-widest mt-0.5">Dr. Sterling • Examination Room 1</p>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <div className="px-4 py-1.5 rounded-md bg-muted/30 border border-border text-center min-w-[80px]">
-              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Avg Visit</p>
-              <p className="text-lg font-headline font-bold text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</p>
+          <div className="flex gap-2">
+            <div className="px-3 py-0.5 rounded-sm bg-muted/30 border border-border text-center">
+              <p className="text-[7px] uppercase font-bold text-muted-foreground">Avg Duration</p>
+              <p className="text-sm font-headline font-bold text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</p>
             </div>
-            <div className="px-4 py-1.5 rounded-md bg-muted/30 border border-border text-center min-w-[80px]">
-              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Waiting</p>
-              <p className="text-lg font-headline font-bold text-primary">{waitingPatients.length}</p>
+            <div className="px-3 py-0.5 rounded-sm bg-muted/30 border border-border text-center">
+              <p className="text-[7px] uppercase font-bold text-muted-foreground">Queued</p>
+              <p className="text-sm font-headline font-bold text-primary">{waitingPatients.length}</p>
             </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8">
-            <section className="minimal-card p-10 min-h-[400px] flex flex-col justify-center text-center">
-              <div className="space-y-10">
-                <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-muted-foreground">Now Serving</p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+          <div className="lg:col-span-9">
+            <section className="minimal-card p-8 min-h-[500px] flex flex-col justify-center text-center bg-card/30">
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-muted-foreground">Active Session</p>
                   {activePatient ? (
                     <div className="space-y-4 animate-in zoom-in-95 duration-500">
-                      <div className="inline-block text-[6rem] font-headline font-bold leading-none text-accent">
+                      <div className="inline-block text-[10rem] font-headline font-bold leading-none text-accent">
                         #{activePatient.token_number}
                       </div>
-                      <h2 className="text-4xl font-headline font-bold text-foreground">{activePatient.name}</h2>
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs font-bold">
-                        <Clock size={14} /> 
+                      <h2 className="text-4xl font-headline font-bold text-foreground tracking-tight">{activePatient.name}</h2>
+                      <div className="flex items-center justify-center gap-1.5 text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
+                        <Clock size={12} /> 
                         Started {activePatient.called_at ? new Date(activePatient.called_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just Now'}
                       </div>
                     </div>
                   ) : (
-                    <div className="py-16 space-y-3">
-                      <CheckCircle2 size={48} className="mx-auto text-muted-foreground/20" />
-                      <p className="text-xl font-headline font-bold italic text-muted-foreground">Ready for intake</p>
+                    <div className="py-20 space-y-3">
+                      <CheckCircle2 size={40} className="mx-auto text-muted-foreground/10" />
+                      <p className="text-lg font-headline font-bold italic text-muted-foreground uppercase tracking-widest">Ready for next patient</p>
                     </div>
                   )}
                 </div>
@@ -146,30 +147,30 @@ export default function DoctorPage() {
                 <Button 
                   onClick={handleCompleteAndNext}
                   disabled={loading || (waitingPatients.length === 0 && !activePatient)}
-                  className="w-full max-w-xs mx-auto h-14 rounded-lg font-headline font-bold text-lg uppercase tracking-widest"
+                  className="w-full max-w-xs mx-auto h-12 rounded-sm font-headline font-bold text-sm uppercase tracking-widest"
                 >
-                  <SkipForward className="mr-3" size={20} />
-                  {activePatient ? "Complete" : "Call Next"}
+                  <SkipForward className="mr-2" size={16} />
+                  {activePatient ? "Mark Complete" : "Call First Patient"}
                 </Button>
               </div>
             </section>
           </div>
 
-          <div className="lg:col-span-4">
-            <section className="minimal-card p-6 flex flex-col h-full">
-              <h3 className="text-sm font-headline font-bold mb-4 flex items-center gap-2">
-                <Users size={16} className="text-primary" /> Up Next
+          <div className="lg:col-span-3">
+            <section className="minimal-card p-4 flex flex-col h-full bg-muted/5">
+              <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                <Users size={12} className="text-primary" /> Upcoming Patients
               </h3>
-              <div className="space-y-2 overflow-y-auto max-h-[350px] custom-scrollbar">
-                {waitingPatients.slice(0, 10).map((p, idx) => (
-                  <div key={p.id} className="p-3 border border-border rounded-md flex items-center justify-between bg-muted/10">
-                    <span className="font-bold text-muted-foreground text-[10px] w-6">#{p.token_number}</span>
-                    <span className="font-bold text-xs flex-1">{p.name}</span>
-                    {idx === 0 && <Badge variant="outline" className="text-[8px] h-4 px-1 text-primary border-primary/20">NEXT</Badge>}
+              <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-180px)] custom-scrollbar">
+                {waitingPatients.slice(0, 15).map((p, idx) => (
+                  <div key={p.id} className="p-2 border border-border rounded-sm flex items-center justify-between bg-white hover:bg-muted/30 transition-colors">
+                    <span className="font-bold text-muted-foreground text-[9px] w-6">#{p.token_number}</span>
+                    <span className="font-bold text-[10px] flex-1 truncate mr-2">{p.name}</span>
+                    {idx === 0 && <Badge variant="outline" className="text-[7px] h-3 px-1 text-primary border-primary/20">NEXT</Badge>}
                   </div>
                 ))}
                 {waitingPatients.length === 0 && (
-                  <p className="text-center py-8 text-xs italic text-muted-foreground">Empty</p>
+                  <p className="text-center py-10 text-[10px] italic text-muted-foreground">No pending patients</p>
                 )}
               </div>
             </section>

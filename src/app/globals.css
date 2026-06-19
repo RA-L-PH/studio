@@ -5,26 +5,26 @@
 
 @layer base {
   :root {
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 10%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 12%;
-    --muted-foreground: 215 20% 65%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 174 75% 45%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 32% 12%;
-    --input: 217 32% 12%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.3rem;
   }
 }
 
@@ -40,14 +40,14 @@
   }
 }
 
-/* Minimalist Card Style - Scaled Down */
+/* Minimalist Card Style - Light Theme */
 .minimal-card {
-  @apply bg-card border border-border rounded-lg;
+  @apply bg-card border border-border rounded-sm shadow-sm;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .minimal-card:hover {
-  @apply border-primary/20;
+  @apply border-primary/30 shadow-md;
 }
 
 /* Custom Scrollbar for Minimalist UI */

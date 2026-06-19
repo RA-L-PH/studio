@@ -111,110 +111,110 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-2">
       <ConnectionSentry />
       
-      <div className="max-w-6xl mx-auto space-y-4">
-        <header className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+      <div className="w-full space-y-2">
+        <header className="flex items-center justify-between p-3 border border-border rounded-sm bg-card">
           <div className="flex items-center gap-3">
-            <Activity className="text-primary w-6 h-6" />
+            <Activity className="text-primary w-5 h-5" />
             <div>
-              <h1 className="text-lg font-headline font-bold">Reception</h1>
-              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                {queueLoading ? <RefreshCcw size={10} className="animate-spin" /> : <span className="w-1 h-1 rounded-full bg-accent" />}
-                {waitingPatients.length} Active
+              <h1 className="text-sm font-headline font-bold">Reception Portal</h1>
+              <p className="text-muted-foreground text-[8px] font-bold uppercase tracking-widest flex items-center gap-2">
+                {queueLoading ? <RefreshCcw size={8} className="animate-spin" /> : <span className="w-1 h-1 rounded-full bg-accent" />}
+                {waitingPatients.length} Active in Queue
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1 rounded-md bg-muted/50 border border-border flex flex-col items-center">
-              <span className="text-[8px] uppercase font-bold text-muted-foreground">Pace</span>
-              <span className="font-bold text-sm text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</span>
+          <div className="flex items-center gap-2">
+            <div className="px-2 py-0.5 rounded-sm bg-muted/50 border border-border flex flex-col items-center">
+              <span className="text-[7px] uppercase font-bold text-muted-foreground">Pace</span>
+              <span className="font-bold text-xs text-accent">{Math.round((stats?.avg_consult_duration || 600000) / 60000)}m</span>
             </div>
-            <div className="px-3 py-1 rounded-md bg-muted/50 border border-border flex flex-col items-center">
-              <span className="text-[8px] uppercase font-bold text-muted-foreground">Today</span>
-              <span className="font-bold text-sm text-primary">{stats?.total_patients_today || 0}</span>
+            <div className="px-2 py-0.5 rounded-sm bg-muted/50 border border-border flex flex-col items-center">
+              <span className="text-[7px] uppercase font-bold text-muted-foreground">Total</span>
+              <span className="font-bold text-xs text-primary">{stats?.total_patients_today || 0}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearQueue} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-              <Trash2 size={16} />
+            <Button variant="ghost" size="icon" onClick={clearQueue} className="h-7 w-7 text-muted-foreground hover:text-destructive">
+              <Trash2 size={14} />
             </Button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-4 space-y-4">
-            <section className="minimal-card p-6 space-y-4">
-              <h2 className="text-sm font-headline font-bold flex items-center gap-2">
-                <Plus size={16} className="text-primary" /> New Intake
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+          <div className="lg:col-span-3 space-y-2">
+            <section className="minimal-card p-4 space-y-3">
+              <h2 className="text-[10px] font-headline font-bold uppercase tracking-wider flex items-center gap-2">
+                <Plus size={12} className="text-primary" /> New Registration
               </h2>
-              <form onSubmit={handleIntake} className="space-y-3">
+              <form onSubmit={handleIntake} className="space-y-2">
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+                  <User className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={12} />
                   <Input 
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
-                    placeholder="Patient Name"
-                    className="pl-9 h-10 bg-muted/10 text-xs"
+                    placeholder="Full Name"
+                    className="pl-8 h-8 text-[11px]"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full h-10 text-xs font-bold uppercase tracking-widest">
-                  Check In
+                <Button type="submit" disabled={loading} className="w-full h-8 text-[10px] font-bold uppercase tracking-widest">
+                  Generate Token
                 </Button>
               </form>
             </section>
 
-            <section className="minimal-card p-6">
-              <h2 className="text-sm font-headline font-bold mb-3">Serving</h2>
+            <section className="minimal-card p-4">
+              <h2 className="text-[10px] font-headline font-bold uppercase tracking-wider mb-2">Currently Serving</h2>
               {activePatient ? (
-                <div className="p-3 rounded-md bg-accent/5 border border-accent/10 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
+                <div className="p-2 rounded-sm bg-accent/5 border border-accent/10 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded bg-accent text-accent-foreground flex items-center justify-center font-bold text-sm">
                     #{activePatient.token_number}
                   </div>
                   <div>
-                    <p className="font-bold text-sm">{activePatient.name}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">{new Date(activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="font-bold text-[11px]">{activePatient.name}</p>
+                    <p className="text-[8px] text-muted-foreground uppercase">{new Date(activePatient.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>
               ) : (
-                <div className="py-6 text-center border border-dashed border-border rounded-md text-muted-foreground italic text-xs">
-                  Idle
+                <div className="py-4 text-center border border-dashed border-border rounded-sm text-muted-foreground italic text-[10px]">
+                  Doctor Idle
                 </div>
               )}
             </section>
           </div>
 
-          <div className="lg:col-span-8 flex flex-col">
+          <div className="lg:col-span-9 flex flex-col">
             <section className="minimal-card flex-1 flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <h2 className="text-sm font-headline font-bold">Queue</h2>
-                <div className="relative w-48">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={12} />
+              <div className="p-3 border-b border-border flex items-center justify-between bg-muted/20">
+                <h2 className="text-[10px] font-headline font-bold uppercase tracking-widest">Active Waiting List</h2>
+                <div className="relative w-40">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" size={10} />
                   <Input 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search..."
-                    className="pl-8 h-8 bg-muted/10 text-xs"
+                    placeholder="Search patients..."
+                    className="pl-7 h-7 bg-white text-[10px]"
                   />
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar max-h-[400px]">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar max-h-[calc(100vh-160px)]">
                 {waitingPatients.length === 0 ? (
-                  <div className="h-48 flex flex-col items-center justify-center opacity-20">
-                    <Users size={32} className="mb-2" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                  <div className="h-48 flex flex-col items-center justify-center opacity-30">
+                    <Users size={24} className="mb-2" />
+                    <p className="text-[8px] font-bold uppercase tracking-widest">No Waiting Patients</p>
                   </div>
                 ) : (
                   waitingPatients.map((p, idx) => (
-                    <div key={p.id} className="p-3 border border-border rounded-md flex items-center justify-between hover:bg-muted/10 transition-colors">
+                    <div key={p.id} className="p-2 border border-border rounded-sm flex items-center justify-between hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-muted-foreground w-6">#{p.token_number}</span>
-                        <p className="font-bold text-sm">{p.name}</p>
+                        <span className="text-[10px] font-bold text-muted-foreground w-5">#{p.token_number}</span>
+                        <p className="font-bold text-[11px]">{p.name}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">Pos {idx + 1}</span>
-                        <Badge variant="outline" className="text-[8px] h-5 px-1.5 font-bold">WAITING</Badge>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[7px] font-bold text-muted-foreground uppercase bg-muted px-1 py-0.5 rounded-sm">Pos {idx + 1}</span>
+                        <Badge variant="outline" className="text-[7px] h-4 px-1 font-bold">WAITING</Badge>
                       </div>
                     </div>
                   ))
