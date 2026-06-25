@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "PulseQueue",
   description: "A minimalist patient management engine for real-time clarity.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
