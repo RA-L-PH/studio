@@ -28,7 +28,7 @@ interface DailyReport {
 }
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const [clinicData, setClinicData] = useState<ClinicData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       router.push('/login');
       return;
@@ -104,7 +106,7 @@ export default function Dashboard() {
     </div>
   );
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
         Syncing dashboard...

@@ -3,6 +3,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   output: 'export',
+  allowedDevOrigins: ['192.168.137.1', 'localhost', '127.0.0.1'],
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,

@@ -65,3 +65,101 @@
   flex-direction: column;
 }
 
+/* Light mode overrides for arbitrary Tailwind classes */
+html.light {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-\[\#0D1012\],
+html.light .bg-\[\#0d1012\],
+html.light .bg-\[\#0d1012\]\/90,
+html.light .bg-\[\#0D1012\]\/60,
+html.light .bg-\[\#0D1012\]\/30 {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-\[\#111618\],
+html.light .bg-gray-900\/40,
+html.light .bg-gray-900\/60 {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .border-gray-800,
+html.light .border-gray-800\/80,
+html.light .border-gray-800\/60,
+html.light .border-gray-800\/50,
+html.light .border-gray-800\/40,
+html.light .border-gray-850,
+html.light .border-gray-900,
+html.light .border-gray-950,
+html.light .border-border {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-gray-100,
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .text-gray-350,
+html.light .text-gray-300,
+html.light .text-gray-405,
+html.light .text-gray-400 {
+  color: #475569 !important;
+}
+
+html.light .text-gray-500,
+html.light .text-gray-600 {
+  color: #64748b !important;
+}
+
+html.light .bg-gray-900,
+html.light .bg-gray-900\/20,
+html.light .bg-gray-950\/20,
+html.light .bg-gray-950\/40 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .hover\:bg-gray-900\/35:hover,
+html.light .hover\:bg-gray-900:hover,
+html.light .hover\:bg-gray-950\/20:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Accent overlays */
+html.light .bg-\[\#1A81E6\]\/10,
+html.light .bg-\[\#17CEA4\]\/10,
+html.light .bg-\[\#17CEA4\]\/5,
+html.light .bg-yellow-500\/10,
+html.light .bg-red-500\/10 {
+  background-color: rgba(26, 129, 230, 0.08) !important;
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+html.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: #e2e8f0 !important;
+  backdrop-filter: blur(12px) !important;
+}
+html.light footer {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+

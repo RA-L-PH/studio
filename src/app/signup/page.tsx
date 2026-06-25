@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../firebase/auth-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '../../firebase';
@@ -30,6 +30,11 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +59,8 @@ export default function Signup() {
       setError(error.message);
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col items-center justify-center p-6 relative">

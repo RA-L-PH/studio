@@ -84,12 +84,12 @@ function QueueDisplayContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1012] text-gray-100 font-sans flex flex-col overflow-hidden relative">
+    <div className="h-screen w-screen bg-[#0D1012] text-gray-100 font-sans flex flex-col overflow-hidden relative">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#1A81E6]/5 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Header */}
-      <header className="backdrop-blur-md border-b border-gray-800/40 bg-[#0D1012]/80 p-6 shrink-0">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <header className="backdrop-blur-md border-b border-gray-800/40 bg-[#0D1012]/80 px-8 py-4 shrink-0">
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
            <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-[#1A81E6]/10 border border-[#1A81E6]/25 flex items-center justify-center text-[#1A81E6]">
                 <Stethoscope size={24} />
@@ -105,70 +105,72 @@ function QueueDisplayContent() {
              <div className="flex items-center justify-center md:justify-end gap-1.5 mt-1.5 text-xs text-[#17CEA4] font-semibold">
                 <Clock size={14}/>
                 <span>Est. Wait Time: ~{waitTime}m</span>
-             </div>
+              </div>
            </div>
         </div>
       </header>
 
-      {/* Main serving view */}
-      <main className="flex-grow max-w-7xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        {/* Now Serving Panel */}
-        <div className="bg-[#111618] border border-[#17CEA4]/20 rounded-3xl flex flex-col items-center justify-center p-12 text-center relative overflow-hidden shadow-[0_15px_40px_rgba(23,206,164,0.05)]">
+      {/* Main serving view - Edged Layout */}
+      <main className="flex-grow w-full grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-950/40 items-stretch overflow-hidden">
+        {/* Now Serving Panel - Edged */}
+        <div className="bg-[#111618] flex flex-col items-center justify-center p-12 text-center relative overflow-hidden border-r border-gray-800/60">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#17CEA4]/5 rounded-full blur-2xl" />
-          <div className="flex items-center gap-2 text-xs text-[#17CEA4] font-mono uppercase tracking-widest font-bold mb-4">
+          <div className="flex items-center gap-2 text-xs text-[#17CEA4] font-mono uppercase tracking-widest font-bold mb-6">
             <Activity size={16} className="animate-pulse" /> Now Serving
           </div>
-          <p className="text-[9rem] md:text-[12rem] font-black text-white leading-none tracking-tighter font-mono">
+          <p className="text-[12rem] md:text-[16rem] font-black text-white leading-none tracking-tighter font-mono">
             {currentToken ? String(currentToken).padStart(3, '0') : '---'}
           </p>
         </div>
 
-        {/* Upcoming Queue Panel */}
-        <div className="bg-[#111618] border border-gray-800/80 rounded-3xl flex flex-col p-8 justify-between shadow-[0_15px_40px_rgba(0,0,0,0.3)]">
-          <div className="flex items-center justify-between pb-4 border-b border-gray-850 mb-6">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
-              <Users size={16} className="text-[#1A81E6]" /> Upcoming Queue
-            </h2>
-            <span className="text-[10px] font-mono text-gray-600">TV DISPLAY MODE</span>
+        {/* Upcoming Queue Panel - Edged */}
+        <div className="bg-[#111618] flex flex-col p-10 justify-between overflow-hidden">
+          <div>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-850 mb-6">
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                <Users size={16} className="text-[#1A81E6]" /> Upcoming Queue
+              </h2>
+              <span className="text-[10px] font-mono text-gray-600">TV DISPLAY MODE</span>
+            </div>
+
+            <div className="w-full">
+              { getStatusMessage() ? (
+                  <div className="flex flex-col items-center justify-center text-center p-8 bg-[#0D1012]/40 rounded-2xl border border-gray-850/60 max-w-sm mx-auto w-full">
+                     {getStatusMessage()?.icon}
+                     <p className="mt-4 text-sm font-bold font-mono text-gray-400 leading-relaxed">{getStatusMessage()?.text}</p>
+                  </div>
+              ) : queue.length > 0 ? (
+                 <div className="w-full space-y-4">
+                    {queue.slice(0, 5).map((patient, index) => {
+                      const isNext = index === 0;
+                      return (
+                        <div 
+                          key={patient.token} 
+                          className={`flex items-center justify-between p-4.5 rounded-xl border transition-all ${
+                            isNext 
+                              ? 'bg-[#1A81E6] border-transparent shadow-[0_4px_25px_rgba(26,129,230,0.25)] scale-[1.01]' 
+                              : 'bg-[#0D1012] border-gray-850'
+                          }`}
+                        >
+                          <span className={`font-mono text-2xl font-bold ${isNext ? 'text-white' : 'text-[#1A81E6]'}`}>
+                            #{String(patient.token).padStart(3, '0')}
+                          </span>
+                          <span className={`text-lg font-bold ${isNext ? 'text-white' : 'text-gray-300'}`}>
+                            {patient.name}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+              ) : (
+                 <div className="text-center py-12">
+                    <p className="text-sm text-gray-600 font-mono">Queue is empty</p>
+                 </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex-grow flex items-center justify-center">
-            { getStatusMessage() ? (
-                <div className="flex flex-col items-center justify-center text-center p-8 bg-[#0D1012]/40 rounded-2xl border border-gray-850/60 max-w-sm w-full">
-                   {getStatusMessage()?.icon}
-                   <p className="mt-4 text-sm font-bold font-mono text-gray-400 leading-relaxed">{getStatusMessage()?.text}</p>
-                </div>
-            ) : queue.length > 0 ? (
-               <div className="w-full space-y-3">
-                  {queue.slice(0, 4).map((patient, index) => {
-                    const isNext = index === 0;
-                    return (
-                      <div 
-                        key={patient.token} 
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                          isNext 
-                            ? 'bg-[#1A81E6] border-transparent shadow-[0_4px_25px_rgba(26,129,230,0.25)] scale-[1.02]' 
-                            : 'bg-[#0D1012] border-gray-850'
-                        }`}
-                      >
-                        <span className={`font-mono text-xl font-bold ${isNext ? 'text-white' : 'text-[#1A81E6]'}`}>
-                          #{String(patient.token).padStart(3, '0')}
-                        </span>
-                        <span className={`text-base font-bold ${isNext ? 'text-white' : 'text-gray-300'}`}>
-                          {patient.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-            ) : (
-               <div className="text-center">
-                  <p className="text-xs text-gray-600 font-mono">Queue is empty</p>
-               </div>
-            )}
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-gray-850 flex items-center justify-between text-[10px] font-mono text-gray-500">
+          <div className="pt-4 border-t border-gray-850 flex items-center justify-between text-[10px] font-mono text-gray-500">
             <span>PING AUDIO NOTIFICATIONS ACTIVE</span>
             <Bell size={12} className="text-[#1A81E6] animate-bounce" />
           </div>
