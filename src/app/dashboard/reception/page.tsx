@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../../firebase/auth-provider';
 import { db, rtdb } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { ref, onValue, set, get, child } from 'firebase/database';
+import { ref, onValue, set, get, child, update } from 'firebase/database';
 import { ArrowLeft, UserPlus, ListOrdered, LogOut, Clock, Hospital, UserCheck, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -74,8 +74,23 @@ function ReceptionViewContent() {
             }
         }
 
-        const newPatientRef = child(queueRef, `patients/${nextToken}`);
-        set(newPatientRef, { token: nextToken, name: patientName.trim() });
+        if (!data) {
+          await set(queueRef, {
+            currentToken: 0,
+            doctorStatus: 'available',
+            avgConsultationTime: 5,
+            breakCount: 0,
+            patients: {
+              [nextToken]: { token: nextToken, name: patientName.trim() }
+            }
+          });
+        } else {
+          const newPatientRef = child(queueRef, `patients/${nextToken}`);
+          await set(newPatientRef, { token: nextToken, name: patientName.trim() });
+          if (data.doctorStatus === 'offline') {
+            await update(queueRef, { doctorStatus: 'available' });
+          }
+        }
         setPatientName('');
     }
   };

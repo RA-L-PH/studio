@@ -78,6 +78,7 @@ html.light body {
 html.light .bg-\[\#0D1012\],
 html.light .bg-\[\#0d1012\],
 html.light .bg-\[\#0d1012\]\/90,
+html.light .bg-\[\#0D1012\]\/80,
 html.light .bg-\[\#0D1012\]\/60,
 html.light .bg-\[\#0D1012\]\/30 {
   background-color: #f8fafc !important;
@@ -105,6 +106,22 @@ html.light .border-border {
 html.light .text-gray-100,
 html.light .text-white {
   color: #0f172a !important;
+}
+
+/* Maintain text-white on primary/vibrant background surfaces in light mode */
+html.light .bg-\[\#1A81E6\] .text-white,
+html.light .bg-\[\#1A81E6\] .text-gray-100,
+html.light .bg-\[\#1A81E6\] .text-lg,
+html.light .bg-\[\#1A81E6\] .font-mono,
+html.light .bg-primary .text-white,
+html.light .bg-primary .text-gray-100,
+html.light .bg-destructive .text-white,
+html.light button.bg-\[\#1A81E6\],
+html.light button.bg-primary,
+html.light .bg-green-600 .text-white,
+html.light .bg-emerald-600 .text-white,
+html.light .bg-red-600 .text-white {
+  color: #ffffff !important;
 }
 
 html.light .text-gray-350,

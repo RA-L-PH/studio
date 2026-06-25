@@ -146,7 +146,7 @@ function QueueDisplayContent() {
                       return (
                         <div 
                           key={patient.token} 
-                          className={`flex items-center justify-between p-4.5 rounded-xl border transition-all ${
+                          className={`flex items-center justify-between p-5 rounded-xl border transition-all ${
                             isNext 
                               ? 'bg-[#1A81E6] border-transparent shadow-[0_4px_25px_rgba(26,129,230,0.25)] scale-[1.01]' 
                               : 'bg-[#0D1012] border-gray-850'

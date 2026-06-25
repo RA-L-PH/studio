@@ -40,7 +40,8 @@ function DoctorViewContent() {
         if (data) {
           const currentTokenVal = data.currentToken || 0;
           setCurrentToken(currentTokenVal);
-          setDoctorStatus(data.doctorStatus || 'available');
+          const status = data.doctorStatus || 'available';
+          setDoctorStatus(status);
           setAvgConsultationTime(data.avgConsultationTime || 5);
           setLastConsultationTimestamp(data.lastConsultationTimestamp || null);
           setBreakCount(data.breakCount || 0);
@@ -50,6 +51,19 @@ function DoctorViewContent() {
             .filter(p => p.token > currentTokenVal)
             .sort((a, b) => a.token - b.token);
           setPatientQueue(upcoming);
+
+          // Auto-activate clinic when doctor opens the cockpit
+          if (status === 'offline') {
+            update(queueRef, { doctorStatus: 'available' });
+          }
+        } else {
+          // Initialize clinic in RTDB
+          update(queueRef, {
+            currentToken: 0,
+            doctorStatus: 'available',
+            avgConsultationTime: 5,
+            breakCount: 0
+          });
         }
       });
     }
