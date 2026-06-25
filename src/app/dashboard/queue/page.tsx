@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { db, rtdb } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, onValue } from 'firebase/database';
@@ -19,7 +18,7 @@ interface ClinicDetails {
   specialization: string;
 }
 
-export default function QueueDisplay() {
+function QueueDisplayContent() {
   const searchParams = useSearchParams();
   const clinicCode = searchParams.get('code');
 
@@ -176,5 +175,17 @@ export default function QueueDisplay() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function QueueDisplay() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Loading monitor...
+      </div>
+    }>
+      <QueueDisplayContent />
+    </Suspense>
   );
 }

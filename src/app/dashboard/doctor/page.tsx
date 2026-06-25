@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../../firebase/auth-provider';
 import { db, rtdb } from '../../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -15,7 +15,7 @@ interface Patient {
   name: string;
 }
 
-export default function DoctorView() {
+function DoctorViewContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -258,6 +258,18 @@ export default function DoctorView() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DoctorView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Loading cockpit...
+      </div>
+    }>
+      <DoctorViewContent />
+    </Suspense>
   );
 }
 

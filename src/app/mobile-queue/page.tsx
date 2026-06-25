@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { rtdb, db } from '../../firebase';
 import { ref, onValue } from 'firebase/database';
 import { useSearchParams } from 'next/navigation';
@@ -19,7 +19,7 @@ interface ClinicDetails {
   specialization: string;
 }
 
-export default function MobileQueue() {
+function MobileQueueContent() {
   const searchParams = useSearchParams();
   const clinicCode = searchParams.get('code');
 
@@ -158,6 +158,18 @@ export default function MobileQueue() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function MobileQueue() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Loading queue...
+      </div>
+    }>
+      <MobileQueueContent />
+    </Suspense>
   );
 }
 

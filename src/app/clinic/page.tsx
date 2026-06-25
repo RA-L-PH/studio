@@ -1,10 +1,9 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ref, onValue } from 'firebase/database';
-import { rtdb } from '../../../firebase';
+import { rtdb } from '../../firebase';
 import Link from 'next/link';
 import { ArrowLeft, Clock, Users, Hospital, Activity } from 'lucide-react';
 
@@ -19,9 +18,9 @@ interface QueueData {
   patients: Record<string, Patient>;
 }
 
-export default function ClinicQueue() {
-  const params = useParams();
-  const clinicCode = params.clinicCode as string;
+function ClinicQueueContent() {
+  const searchParams = useSearchParams();
+  const clinicCode = searchParams.get('code');
   const [queueData, setQueueData] = useState<QueueData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +35,8 @@ export default function ClinicQueue() {
       });
 
       return () => unsubscribe();
+    } else {
+      setLoading(false);
     }
   }, [clinicCode]);
 
@@ -47,13 +48,13 @@ export default function ClinicQueue() {
     );
   }
 
-  if (!queueData) {
+  if (!clinicCode || !queueData) {
     return (
       <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col items-center justify-center p-6 relative">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="max-w-md w-full bg-[#111618] p-8 border border-gray-800 rounded-2xl text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           <h1 className="text-2xl font-bold mb-3 font-mono text-white">Clinic Not Found</h1>
-          <p className="text-xs text-gray-400 mb-6">The clinic with code <strong className="text-[#17CEA4] font-mono">{clinicCode}</strong> does not exist.</p>
+          <p className="text-xs text-gray-400 mb-6">The clinic code <strong className="text-[#17CEA4] font-mono">{clinicCode || 'None'}</strong> is invalid or does not exist.</p>
           <Link href="/find-clinic" className="inline-flex items-center gap-1.5 text-xs text-[#1A81E6] hover:underline font-semibold font-mono">
             <ArrowLeft size={14} /> Back to search
           </Link>
@@ -127,3 +128,14 @@ export default function ClinicQueue() {
   );
 }
 
+export default function ClinicQueue() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Loading clinic queue...
+      </div>
+    }>
+      <ClinicQueueContent />
+    </Suspense>
+  );
+}

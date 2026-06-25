@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../../firebase/auth-provider';
 import { db, rtdb } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -20,7 +20,7 @@ interface ClinicDetails {
   doctorName: string;
 }
 
-export default function ReceptionView() {
+function ReceptionViewContent() {
   const { logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -218,6 +218,18 @@ export default function ReceptionView() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ReceptionView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Loading portal...
+      </div>
+    }>
+      <ReceptionViewContent />
+    </Suspense>
   );
 }
 
