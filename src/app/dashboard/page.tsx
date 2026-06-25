@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { Stethoscope, User, Monitor, ArrowRight, LogOut, FileText, ChevronDown, Clock, Users, Coffee } from 'lucide-react';
+import { Stethoscope, User, Monitor, ArrowRight, LogOut, FileText, ChevronDown, Clock, Users, Coffee, Hospital, Calendar } from 'lucide-react';
 
 interface ClinicData {
   clinicName: string;
@@ -21,9 +21,9 @@ interface Patient {
 interface DailyReport {
   id: string;
   date: string;
-  totalPatients?: number; // Make optional for older reports
-  avgConsultationTime?: number; // Make optional
-  totalBreaks?: number; // Make optional
+  totalPatients?: number;
+  avgConsultationTime?: number;
+  totalBreaks?: number;
   patients: Patient[];
 }
 
@@ -35,7 +35,6 @@ export default function Dashboard() {
   const [reports, setReports] = useState<DailyReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-
 
   useEffect(() => {
     if (!user) {
@@ -88,136 +87,167 @@ export default function Dashboard() {
 
   const Card = ({ icon, title, description, path }: { icon: React.ReactNode, title: string, description: string, path: string }) => (
     <div
-        className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
-        onClick={() => router.push(path)}
+      className="bg-[#111618] border border-gray-800 hover:border-gray-700/80 p-6 rounded-2xl flex flex-col justify-between hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all cursor-pointer group"
+      onClick={() => router.push(path)}
     >
-        <div>
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full w-max mb-3">{icon}</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
-            <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{description}</p>
+      <div>
+        <div className="p-2.5 bg-gray-900 border border-gray-800 rounded-xl w-max mb-4 text-[#1A81E6] group-hover:scale-110 transition-transform">
+          {icon}
         </div>
-        <div className="flex items-center justify-end font-semibold text-blue-600 dark:text-blue-400 mt-4 text-sm">
-            <span>Launch</span>
-            <ArrowRight className="ml-1.5" size={18} />
-        </div>
+        <h3 className="text-lg font-bold text-white font-mono">{title}</h3>
+        <p className="text-gray-400 mt-1.5 text-xs leading-relaxed">{description}</p>
+      </div>
+      <div className="flex items-center justify-end font-semibold text-xs uppercase tracking-wider font-mono text-[#17CEA4] mt-6 gap-1 group-hover:translate-x-1 transition-transform">
+        <span>Open Terminal</span>
+        <ArrowRight size={14} />
+      </div>
     </div>
   );
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Loading dashboard...</p></div>
+    return (
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Syncing dashboard...
+      </div>
+    );
   }
 
   if (!clinicData) {
-     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
-            <h1 className="text-2xl font-bold mb-4">No clinic data found.</h1>
-            <p className="mb-8">Please set up your clinic first.</p>
-            <button onClick={() => router.push('/signup')} className="px-6 py-2 bg-blue-600 text-white rounded-lg">Go to Signup</button>
+    return (
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col items-center justify-center p-6 relative">
+        <div className="max-w-md w-full bg-[#111618] p-8 border border-gray-800 rounded-2xl text-center">
+          <h1 className="text-2xl font-bold mb-3 font-mono">No Workspace Found</h1>
+          <p className="text-xs text-gray-400 mb-6">Please set up your clinic profile first.</p>
+          <button 
+            onClick={() => router.push('/signup')} 
+            className="w-full bg-[#1A81E6] hover:bg-[#1A81E6]/95 text-white font-bold py-2.5 rounded-xl transition-all shadow-[0_4px_12px_rgba(26,129,230,0.15)] text-xs uppercase tracking-wider font-mono"
+          >
+            Create Clinic Profile
+          </button>
         </div>
-    )
+      </div>
+    );
   }
 
   const { clinicName, clinicCode } = clinicData;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{clinicName}</h1>
-            <p className="text-gray-500 dark:text-gray-400">Clinic Code: <span className="font-semibold text-gray-700 dark:text-gray-300">{clinicCode}</span></p>
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col">
+      <header className="sticky top-0 z-50 backdrop-blur-md border-b border-gray-800/40 bg-[#0D1012]/80">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#1A81E6]/10 border border-[#1A81E6]/25 flex items-center justify-center text-[#1A81E6]">
+              <Hospital size={18} />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-white font-mono leading-tight">{clinicName}</h1>
+              <p className="text-[10px] text-gray-500 font-mono">WORKSPACE CODE: <span className="text-[#17CEA4] font-semibold">{clinicCode}</span></p>
+            </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 font-semibold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500 transition-colors">
-                <LogOut size={18} />
-                <span>Logout</span>
+          <button 
+            onClick={handleLogout} 
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/5 text-xs font-semibold text-red-400 transition-all font-mono"
+          >
+            <LogOut size={14} />
+            <span>Logout</span>
           </button>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12 overflow-y-auto">
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-center mb-12">Clinic Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <Card
-                icon={<Stethoscope size={24} className="text-blue-600 dark:text-blue-400"/>}
-                title="Doctor's Cockpit"
-                description="Manage patient flow, view current token, and control consultation status."
-                path={`/dashboard/doctor?code=${clinicCode}`}
-            />
-            <Card
-                icon={<User size={24} className="text-blue-600 dark:text-blue-400"/>}
-                title="Rapid Intake Portal"
-                description="Register new patients and manage the live consultation queue."
-                path={`/dashboard/reception?code=${clinicCode}`}
-            />
-            <Card
-                icon={<Monitor size={24} className="text-blue-600 dark:text-blue-400"/>}
-                title="Live Patient Monitor"
-                description="Display the current token and upcoming queue in the waiting area."
-                path={`/dashboard/queue?code=${clinicCode}`}
-            />
+      <main className="max-w-7xl mx-auto px-6 py-12 w-full flex-grow">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="text-3xl font-extrabold text-white tracking-tight font-mono mb-2">Clinic Management</h2>
+          <p className="text-xs text-gray-400">Launch dashboard terminals to orchestrate live clinic flow operations.</p>
         </div>
 
-        <section className="max-w-5xl mx-auto mt-16">
-          <h2 className="text-3xl font-extrabold text-center mb-8">Past Reports</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <Card
+            icon={<Stethoscope size={20}/>}
+            title="Doctor's Cockpit"
+            description="Manage live patient flow, record breaks, view upcoming tokens, and control active consultations."
+            path={`/dashboard/doctor?code=${clinicCode}`}
+          />
+          <Card
+            icon={<User size={20}/>}
+            title="Rapid Intake Portal"
+            description="Register incoming patients immediately and manage waiting lists on the live queue."
+            path={`/dashboard/reception?code=${clinicCode}`}
+          />
+          <Card
+            icon={<Monitor size={20}/>}
+            title="Live Patient Monitor"
+            description="Display the current serving tokens and waiting ticker in the clinic lobby area."
+            path={`/dashboard/queue?code=${clinicCode}`}
+          />
+        </div>
+
+        <section className="max-w-3xl mx-auto mt-20 border-t border-gray-800/40 pt-16">
+          <div className="flex items-center gap-2 mb-8 justify-center">
+            <Calendar size={18} className="text-[#17CEA4]" />
+            <h2 className="text-xl font-bold text-white font-mono">Past Session Reports</h2>
+          </div>
+
           {loadingReports ? (
-            <p className="text-center text-gray-500">Loading reports...</p>
+            <p className="text-center text-xs text-gray-500 font-mono">Syncing history reports...</p>
           ) : reports.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {reports.map((report) => (
-                <div key={report.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div key={report.id} className="bg-[#111618] border border-gray-800/80 rounded-xl overflow-hidden">
                   <button
                     onClick={() => setActiveAccordion(activeAccordion === report.id ? null : report.id)}
-                    className="w-full flex justify-between items-center p-6 text-left font-semibold text-lg"
+                    className="w-full flex justify-between items-center p-5 text-left font-mono font-bold text-sm text-white hover:bg-gray-900/35 transition-colors"
                   >
                     <span>{report.date}</span>
-                    <ChevronDown className={`transform transition-transform ${activeAccordion === report.id ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={16} className={`transform text-gray-400 transition-transform ${activeAccordion === report.id ? 'rotate-180 text-white' : ''}`} />
                   </button>
                   {activeAccordion === report.id && (
-                     <div className="px-6 pb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="bg-gray-100 dark:bg-gray-700/50 p-4 rounded-lg flex items-center gap-4">
-                              <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
-                                  <Users size={24} className="text-blue-600 dark:text-blue-400"/>
-                              </div>
-                              <div>
-                                  <p className="text-gray-500 dark:text-gray-400 text-sm">Total Patients</p>
-                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{report.totalPatients || 0}</p>
-                              </div>
+                    <div className="px-5 pb-5 pt-2 border-t border-gray-800/40 bg-[#0D1012]/30">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-[#0D1012]/60 border border-gray-850 p-4 rounded-xl flex items-center gap-3">
+                          <div className="p-2 bg-[#1A81E6]/10 border border-[#1A81E6]/20 rounded-lg text-[#1A81E6]">
+                            <Users size={18}/>
                           </div>
-                           <div className="bg-gray-100 dark:bg-gray-700/50 p-4 rounded-lg flex items-center gap-4">
-                               <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
-                                  <Clock size={24} className="text-blue-600 dark:text-blue-400"/>
-                              </div>
-                              <div>
-                                  <p className="text-gray-500 dark:text-gray-400 text-sm">Avg. Consultation Time</p>
-                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{(report.avgConsultationTime || 0).toFixed(1)} mins</p>
-                              </div>
-                          </div>
-                          <div className="bg-gray-100 dark:bg-gray-700/50 p-4 rounded-lg flex items-center gap-4">
-                               <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
-                                  <Coffee size={24} className="text-blue-600 dark:text-blue-400"/>
-                              </div>
-                              <div>
-                                  <p className="text-gray-500 dark:text-gray-400 text-sm">Total Breaks</p>
-                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{report.totalBreaks || 0}</p>
-                              </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">Total Patients</p>
+                            <p className="text-lg font-bold text-white font-mono">{report.totalPatients || 0}</p>
                           </div>
                         </div>
+
+                        <div className="bg-[#0D1012]/60 border border-gray-850 p-4 rounded-xl flex items-center gap-3">
+                          <div className="p-2 bg-[#17CEA4]/10 border border-[#17CEA4]/20 rounded-lg text-[#17CEA4]">
+                            <Clock size={18}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">Avg. Consult</p>
+                            <p className="text-lg font-bold text-white font-mono">{(report.avgConsultationTime || 0).toFixed(1)}m</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0D1012]/60 border border-gray-850 p-4 rounded-xl flex items-center gap-3">
+                          <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-500">
+                            <Coffee size={18}/>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">Total Breaks</p>
+                            <p className="text-lg font-bold text-white font-mono">{report.totalBreaks || 0}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No reports yet</h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">When you use the "End Day" function, your archived reports will appear here.</p>
+            <div className="text-center py-12 border border-dashed border-gray-800 rounded-2xl max-w-md mx-auto">
+              <FileText className="mx-auto h-8 w-8 text-gray-600 mb-3" />
+              <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wide">No reports archived</h3>
+              <p className="text-[11px] text-gray-500 mt-1">Archived session logs will appear here once you complete a clinic day.</p>
             </div>
-
           )}
         </section>
       </main>
     </div>
   );
 }
+

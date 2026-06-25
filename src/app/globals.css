@@ -5,26 +5,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221.2 83.2% 53.3%;
+    --background: 204 16% 6%;
+    --foreground: 210 20% 98%;
+    --card: 197 17% 8%;
+    --card-foreground: 210 20% 98%;
+    --popover: 204 16% 6%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 80% 50%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 174 75% 45%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 197 17% 12%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 197 17% 12%;
+    --muted-foreground: 210 10% 60%;
+    --accent: 166 80% 45%;
+    --accent-foreground: 204 16% 6%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.2rem;
+    --border: 197 17% 16%;
+    --input: 197 17% 16%;
+    --ring: 210 80% 50%;
+    --radius: 0.75rem;
   }
 }
 
@@ -33,26 +33,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased overflow-hidden text-sm;
+    @apply bg-[#0D1012] text-foreground font-body antialiased text-sm;
+    overflow-x: hidden;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
   }
 }
 
-/* Minimalist Scaled Down Styling */
-.minimal-card {
-  @apply bg-card border border-border rounded-sm shadow-none;
+/* Minimalist Modular Cards styling */
+.modular-card {
+  @apply bg-[#111618] border border-border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-md transition-all duration-300;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  @apply bg-[#0D1012];
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
 }
 
 /* Ensure full height layout utility */
@@ -62,3 +64,4 @@
   display: flex;
   flex-direction: column;
 }
+

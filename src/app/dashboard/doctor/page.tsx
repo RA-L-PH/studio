@@ -6,7 +6,7 @@ import { useAuth } from '../../../firebase/auth-provider';
 import { db, rtdb } from '../../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, onValue, update, get, serverTimestamp } from 'firebase/database';
-import { ArrowLeft, ArrowRight, UserCheck, Users, LogOut, Coffee, PowerOff, ListOrdered } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UserCheck, Users, LogOut, Coffee, PowerOff, ListOrdered, Hospital, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -27,7 +27,7 @@ export default function DoctorView() {
   const [doctorStatus, setDoctorStatus] = useState<'available' | 'on_break' | 'offline'>('available');
   const [avgConsultationTime, setAvgConsultationTime] = useState(5);
   const [lastConsultationTimestamp, setLastConsultationTimestamp] = useState<number | null>(null);
-  const [breakCount, setBreakCount] = useState<number>(0); // New state for breaks
+  const [breakCount, setBreakCount] = useState<number>(0);
 
   const currentPatient = allPatients.find(p => p.token === currentToken);
   const nextPatient = patientQueue.length > 0 ? patientQueue[0] : null;
@@ -43,7 +43,7 @@ export default function DoctorView() {
           setDoctorStatus(data.doctorStatus || 'available');
           setAvgConsultationTime(data.avgConsultationTime || 5);
           setLastConsultationTimestamp(data.lastConsultationTimestamp || null);
-          setBreakCount(data.breakCount || 0); // Get break count
+          setBreakCount(data.breakCount || 0);
           const patients = data.patients ? Object.values(data.patients) as Patient[] : [];
           setAllPatients(patients);
           const upcoming = patients
@@ -104,7 +104,7 @@ export default function DoctorView() {
           date: today,
           totalPatients: patientsToArchive.length,
           avgConsultationTime: queueData.avgConsultationTime || 5,
-          totalBreaks: queueData.breakCount || 0, // Save total breaks
+          totalBreaks: queueData.breakCount || 0,
           patients: patientsToArchive,
           createdAt: serverTimestamp()
         });
@@ -116,7 +116,7 @@ export default function DoctorView() {
         patients: null,
         lastConsultationTimestamp: null,
         avgConsultationTime: 5,
-        breakCount: 0 // Reset break count
+        breakCount: 0
       });
     }
   };
@@ -128,95 +128,136 @@ export default function DoctorView() {
   };
 
   if (!clinicCode) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Clinic code not found.</p></div>;
+    return (
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Clinic code not found.
+      </div>
+    );
   }
 
   const getStatusPill = () => {
     switch(doctorStatus) {
       case 'on_break':
-        return <span className="absolute top-4 right-4 text-sm bg-yellow-500 text-white px-3 py-1 rounded-full">On a Break</span>;
+        return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-xs font-semibold font-mono">● On Break</span>;
       case 'offline':
-        return <span className="absolute top-4 right-4 text-sm bg-red-500 text-white px-3 py-1 rounded-full">Offline</span>;
+        return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold font-mono">● Offline</span>;
       default:
-        return <span className="absolute top-4 right-4 text-sm bg-green-500 text-white px-3 py-1 rounded-full">Available</span>;
+        return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#17CEA4]/10 border border-[#17CEA4]/20 text-[#17CEA4] text-xs font-semibold font-mono"><span className="w-1.5 h-1.5 rounded-full bg-[#17CEA4] animate-ping" /> Available</span>;
     }
   }
 
   return (
-    <div className="h-screen bg-gray-100 dark:bg-gray-900 font-sans flex">
-      <aside className="w-80 bg-white dark:bg-gray-800 shadow-xl flex flex-col justify-between p-6">
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col md:flex-row relative overflow-hidden">
+      {/* Sidebar Controls */}
+      <aside className="w-full md:w-80 bg-[#111618] border-r border-gray-800/80 flex flex-col justify-between p-6 shrink-0 z-20">
         <div>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Controls</h2>
-            <div className="space-y-4">
-                <button onClick={handleNextPatient} disabled={!nextPatient || doctorStatus === 'on_break'} className="w-full flex items-center justify-center gap-3 px-4 py-5 text-lg font-bold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 disabled:bg-gray-400 transition-all">
-                    <ArrowRight size={22}/> Call Next
-                </button>
-                 <button onClick={handleToggleBreak} className="w-full flex items-center justify-center gap-3 px-4 py-5 text-lg font-bold text-gray-800 dark:text-white bg-yellow-400 dark:bg-yellow-500 rounded-lg shadow-md hover:bg-yellow-500 dark:hover:bg-yellow-600 transition-all">
-                    <Coffee size={22}/> {doctorStatus === 'on_break' ? 'Resume' : 'Take a Break'}
-                </button>
-                <button onClick={handleEndDay} className="w-full flex items-center justify-center gap-3 px-4 py-5 text-lg font-bold text-white bg-red-500 rounded-lg shadow-md hover:bg-red-600 transition-all">
-                    <PowerOff size={22}/> End Day
-                </button>
+          <div className="flex items-center gap-2.5 mb-8 pb-4 border-b border-gray-800/50">
+            <div className="w-8 h-8 rounded-lg bg-[#1A81E6]/10 border border-[#1A81E6]/25 flex items-center justify-center text-[#1A81E6]">
+              <Hospital size={16} />
             </div>
-             <hr className="my-8 border-gray-200 dark:border-gray-700"/>
-             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2"><ListOrdered size={20} /> Upcoming</h3>
-             <div className="space-y-2">
-                {patientQueue.length > 0 ? patientQueue.slice(0, 5).map(p => (
-                    <div key={p.token} className="flex items-center justify-between text-lg p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
-                        <span className="font-bold text-blue-600 dark:text-blue-400">#{p.token}</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300 truncate">{p.name}</span>
-                    </div>
-                )) : <p className="text-gray-500 dark:text-gray-400">No patients in queue.</p>}
-             </div>
+            <span className="font-bold text-sm text-white font-mono uppercase tracking-wider">Cockpit Controls</span>
+          </div>
+
+          <div className="space-y-3.5">
+            <button 
+              onClick={handleNextPatient} 
+              disabled={!nextPatient || doctorStatus === 'on_break'} 
+              className="w-full flex items-center justify-center gap-2 py-3.5 text-xs font-bold text-white bg-[#1A81E6] hover:bg-[#1A81E6]/95 disabled:bg-gray-800 disabled:text-gray-600 disabled:border-transparent rounded-xl transition-all shadow-[0_4px_12px_rgba(26,129,230,0.15)] uppercase tracking-wider font-mono"
+            >
+              <ArrowRight size={14}/> Call Next
+            </button>
+            <button 
+              onClick={handleToggleBreak} 
+              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold text-gray-300 hover:text-white bg-gray-900 border border-gray-800 hover:border-gray-750 rounded-xl transition-all uppercase tracking-wider font-mono"
+            >
+              <Coffee size={14} className="text-yellow-500"/> {doctorStatus === 'on_break' ? 'Resume Consultation' : 'Take a Break'}
+            </button>
+            <button 
+              onClick={handleEndDay} 
+              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold text-red-400 hover:text-red-300 bg-red-950/10 hover:bg-red-950/20 border border-red-500/20 rounded-xl transition-all uppercase tracking-wider font-mono"
+            >
+              <PowerOff size={14}/> End Session Day
+            </button>
+          </div>
+
+          <hr className="my-8 border-gray-800/60"/>
+
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest font-mono mb-4 flex items-center gap-1.5">
+            <ListOrdered size={14} /> Upcoming (Next 5)
+          </h3>
+          <div className="space-y-2">
+            {patientQueue.length > 0 ? (
+              patientQueue.slice(0, 5).map(p => (
+                <div key={p.token} className="flex items-center justify-between text-xs p-3 bg-[#0D1012] border border-gray-850 rounded-xl">
+                  <span className="font-bold font-mono text-[#1A81E6]">#{String(p.token).padStart(3, '0')}</span>
+                  <span className="font-semibold text-white truncate max-w-[140px]">{p.name}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-[11px] text-gray-600 font-mono italic">No patients waiting.</p>
+            )}
+          </div>
         </div>
 
-        <div className="space-y-2">
-             <Link href="/dashboard" className="flex items-center justify-center gap-2 p-3 font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                 <ArrowLeft size={18} />
-                 <span>Back to Dashboard</span>
-             </Link>
-              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-3 font-semibold text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors">
-                <LogOut size={18} />
-                <span>Logout</span>
-             </button>
+        <div className="space-y-2.5 mt-8 pt-6 border-t border-gray-800/60">
+          <Link href="/dashboard" className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-gray-400 hover:text-white bg-gray-900/40 border border-gray-850 rounded-lg transition-colors font-mono">
+            <ArrowLeft size={14} /> Dashboard Hub
+          </Link>
+          <button 
+            onClick={handleLogout} 
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/5 border border-red-500/10 rounded-lg transition-colors font-mono"
+          >
+            <LogOut size={14} /> Logout
+          </button>
         </div>
       </aside>
 
-      <main className="flex-grow grid grid-rows-2 grid-cols-1 md:grid-cols-2 md:grid-rows-1 gap-px bg-gray-200 dark:bg-gray-700 relative">
-        {getStatusPill()}
-        <div className="bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
-            <UserCheck className="text-green-500 mb-6" size={80} />
-            <h2 className="text-4xl font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Now Serving</h2>
-            <p className="text-9xl font-extrabold text-gray-900 dark:text-white mt-4 tracking-tighter">{currentToken || '-'}</p>
-            {currentPatient && <p className="text-4xl font-semibold text-gray-700 dark:text-gray-200 mt-2">{currentPatient.name}</p>}
+      {/* Main serving interface */}
+      <main className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-950/40 relative z-10">
+        <div className="absolute top-6 right-6 z-20">
+          {getStatusPill()}
         </div>
 
-        <div className="bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-8 text-center">
-             <Users className="text-blue-500 mb-6" size={80} />
-            <h2 className="text-4xl font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Upcoming Patients</h2>
-            {nextPatient ? (
-                <div className="w-full max-w-md mt-6 text-left">
-                    <div className="bg-blue-500 text-white p-6 rounded-xl shadow-lg mb-6">
-                        <p className="text-sm uppercase font-bold opacity-80">Next in Line</p>
-                        <div className="flex items-baseline gap-4">
-                            <p className="text-6xl font-extrabold">{nextPatient.token}</p>
-                            <p className="text-3xl font-semibold truncate">{nextPatient.name}</p>
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        {patientQueue.slice(1, 4).map(p => (
-                            <div key={p.token} className="bg-white dark:bg-gray-800 p-4 rounded-lg flex justify-between items-center shadow-sm">
-                                <span className="font-bold text-2xl text-gray-800 dark:text-white">#{p.token}</span>
-                                <span className="font-medium text-lg text-gray-600 dark:text-gray-300 truncate">{p.name}</span>
-                            </div>
-                        ))}
-                    </div>
+        {/* Serving Panel */}
+        <div className="bg-[#0D1012] flex flex-col items-center justify-center p-8 text-center border-b md:border-b-0 md:border-r border-gray-850">
+          <div className="w-16 h-16 rounded-full bg-[#17CEA4]/5 border border-[#17CEA4]/15 flex items-center justify-center text-[#17CEA4] mb-6">
+            <UserCheck size={28} />
+          </div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest font-mono">Now Serving</h2>
+          <p className="text-8xl md:text-9xl font-extrabold text-white mt-4 tracking-tighter font-mono">
+            {currentToken ? String(currentToken).padStart(3, '0') : '---'}
+          </p>
+          {currentPatient && (
+            <p className="text-2xl font-bold text-[#17CEA4] mt-3 font-mono">{currentPatient.name}</p>
+          )}
+        </div>
+
+        {/* Next Panel */}
+        <div className="bg-[#0D1012] flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-[#1A81E6]/5 border border-[#1A81E6]/15 flex items-center justify-center text-[#1A81E6] mb-6">
+            <Users size={28} />
+          </div>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest font-mono mb-6">Next Patient</h2>
+
+          {nextPatient ? (
+            <div className="w-full max-w-sm text-left bg-[#111618] border border-[#1A81E6]/30 p-6 rounded-2xl shadow-[0_4px_25px_rgba(26,129,230,0.1)]">
+              <div className="flex justify-between items-baseline gap-4">
+                <div>
+                  <span className="text-[10px] font-bold text-[#1A81E6] font-mono uppercase tracking-wider block">Token Number</span>
+                  <p className="text-5xl font-extrabold text-white font-mono mt-1">#{String(nextPatient.token).padStart(3, '0')}</p>
                 </div>
-            ) : (
-                <p className="text-4xl font-semibold text-gray-500 dark:text-gray-400 mt-6">The queue is empty.</p>
-            )}
+                <div className="text-right">
+                  <span className="text-[10px] font-bold text-gray-500 font-mono uppercase tracking-wider block">Patient Name</span>
+                  <p className="text-lg font-bold text-white mt-1 truncate max-w-[160px]">{nextPatient.name}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-base font-bold text-gray-600 font-mono mt-4">Queue is empty.</p>
+          )}
         </div>
       </main>
     </div>
   );
 }
+

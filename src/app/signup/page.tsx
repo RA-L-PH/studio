@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 
 function generateClinicCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -56,83 +56,144 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12">
-      <div className="max-w-md w-full p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-        <h1 className="text-3xl font-extrabold text-center text-gray-900 dark:text-white mb-6">Create Your Clinic Account</h1>
-        {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
-        <form onSubmit={handleSignup} className="space-y-4">
-          <input
-            type="text"
-            value={clinicName}
-            onChange={(e) => setClinicName(e.target.value)}
-            placeholder="Clinic Name"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            type="text"
-            value={doctorName}
-            onChange={(e) => setDoctorName(e.target.value)}
-            placeholder="Doctor Name"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            type="text"
-            value={specialization}
-            onChange={(e) => setSpecialization(e.target.value)}
-            placeholder="Specialization"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Address"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500">
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col items-center justify-center p-6 relative">
+      {/* Background decoration */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#1A81E6]/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-[#17CEA4]/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Back to Home link */}
+      <Link href="/" className="absolute top-6 left-6 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors">
+        <ArrowLeft size={14} /> Back Home
+      </Link>
+
+      <div className="max-w-md w-full p-8 bg-[#111618] border border-gray-800/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md mt-10 mb-10">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#17CEA4]/10 border border-[#17CEA4]/30 text-[#17CEA4] mb-3">
+            <UserPlus size={22} />
           </div>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm Password"
-            required
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
+          <h1 className="text-3xl font-bold tracking-tight text-white font-mono">Create Clinic</h1>
+          <p className="text-xs text-gray-400 mt-1">Set up a real-time queue workspace</p>
+        </div>
+
+        {error && (
+          <div className="mb-5 p-3 rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 text-xs text-center font-medium">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Clinic Name</label>
+            <input
+              type="text"
+              value={clinicName}
+              onChange={(e) => setClinicName(e.target.value)}
+              placeholder="e.g. Apex Health Clinic"
+              required
+              className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Doctor Name</label>
+              <input
+                type="text"
+                value={doctorName}
+                onChange={(e) => setDoctorName(e.target.value)}
+                placeholder="Dr. Smith"
+                required
+                className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Specialization</label>
+              <input
+                type="text"
+                value={specialization}
+                onChange={(e) => setSpecialization(e.target.value)}
+                placeholder="Pediatrician"
+                required
+                className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Clinic Address</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="123 Medical Way, NY"
+              required
+              className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="doctor@clinic.com"
+              required
+              className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider font-mono">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="w-full px-4 py-2.5 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-md"
+            className="w-full bg-[#1A81E6] hover:bg-[#1A81E6]/95 text-white font-bold py-3 rounded-xl transition-all shadow-[0_4px_20px_rgba(26,129,230,0.25)] hover:scale-[1.01] active:scale-95 text-sm mt-2"
           >
-            Sign Up
+            Create Workspace
           </button>
         </form>
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Already have an account? <Link href="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-500">Log in</Link>
-        </p>
+
+        <div className="text-center mt-6 pt-6 border-t border-gray-800/60">
+          <p className="text-xs text-gray-400">
+            Already have a clinic?{' '}
+            <Link href="/login" className="font-semibold text-[#17CEA4] hover:underline">
+              Log in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
+

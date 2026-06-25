@@ -6,7 +6,7 @@ import { db, rtdb } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, onValue } from 'firebase/database';
 import { useSearchParams } from 'next/navigation';
-import { Stethoscope, User, Clock, Bell } from 'lucide-react';
+import { Stethoscope, Clock, Bell, Activity, Users } from 'lucide-react';
 
 interface Patient {
   token: number;
@@ -14,9 +14,9 @@ interface Patient {
 }
 
 interface ClinicDetails {
-    clinicName: string;
-    doctorName: string;
-    specialization: string;
+  clinicName: string;
+  doctorName: string;
+  specialization: string;
 }
 
 export default function QueueDisplay() {
@@ -76,66 +76,102 @@ export default function QueueDisplay() {
   const getStatusMessage = () => {
     switch(doctorStatus) {
       case 'on_break':
-        return { text: "The Doctor is on a short break.", icon: <Clock className="text-yellow-400" size={60}/> };
+        return { text: "Doctor is on a short break.", icon: <Clock className="text-yellow-500 animate-pulse" size={48}/> };
       case 'offline':
-         return { text: "Consultation has ended for the day.", icon: <Clock className="text-red-400" size={60}/> };
+         return { text: "Consultation ended for today.", icon: <Clock className="text-red-500" size={48}/> };
       default:
         return null;
     }
   }
 
   return (
-    <div className="h-screen bg-gray-900 text-white font-sans flex flex-col overflow-hidden">
-      <header className="bg-black bg-opacity-30 p-4 shadow-lg shrink-0">
-        <div className="container mx-auto flex justify-between items-center">
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 font-sans flex flex-col overflow-hidden relative">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#1A81E6]/5 rounded-full blur-[140px] pointer-events-none" />
+
+      {/* Header */}
+      <header className="backdrop-blur-md border-b border-gray-800/40 bg-[#0D1012]/80 p-6 shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
            <div className="flex items-center gap-4">
-              <Stethoscope size={40} className="text-blue-400"/>
-              <div>
-                 <h1 className="text-4xl font-extrabold tracking-tight">{clinicDetails?.clinicName || 'Clinic'}</h1>
-                 <p className="text-xl text-gray-300">Dr. {clinicDetails?.doctorName} <span className="text-base">({clinicDetails?.specialization})</span></p>
+              <div className="w-12 h-12 rounded-xl bg-[#1A81E6]/10 border border-[#1A81E6]/25 flex items-center justify-center text-[#1A81E6]">
+                <Stethoscope size={24} />
+              </div>
+              <div className="text-center md:text-left">
+                 <h1 className="text-3xl font-bold tracking-tight text-white font-mono">{clinicDetails?.clinicName || 'Clinic Lobby'}</h1>
+                 <p className="text-sm text-gray-400 font-mono mt-0.5">Dr. {clinicDetails?.doctorName} <span className="text-gray-600">|</span> {clinicDetails?.specialization}</p>
               </div>
            </div>
-           <div className="text-lg font-semibold text-right">
-             <p>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-             <div className="flex items-center justify-end gap-3 mt-1 text-blue-300">
-                <Clock size={20}/>
-                <p className="text-xl">Est. Wait Time: <span className="font-bold">≈{waitTime} min</span></p>
+           
+           <div className="text-center md:text-right font-mono">
+             <p className="text-xs text-gray-400">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+             <div className="flex items-center justify-center md:justify-end gap-1.5 mt-1.5 text-xs text-[#17CEA4] font-semibold">
+                <Clock size={14}/>
+                <span>Est. Wait Time: ~{waitTime}m</span>
              </div>
            </div>
         </div>
       </header>
 
-      <main className="flex-grow grid grid-cols-2 gap-px bg-gray-700">
-        {/* Left Side: Now Serving */}
-        <div className="bg-green-600 flex flex-col items-center justify-center p-10 text-center relative overflow-hidden">
-             <Bell className="absolute -bottom-10 -right-10 text-white text-opacity-10" size={300}/>
-             <h2 className="text-5xl font-bold uppercase tracking-wider text-green-100">Now Serving</h2>
-             <p className="text-9xl font-extrabold text-white mt-4" style={{fontSize: '12rem'}}>{currentToken || '--'}</p>
+      {/* Main serving view */}
+      <main className="flex-grow max-w-7xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        {/* Now Serving Panel */}
+        <div className="bg-[#111618] border border-[#17CEA4]/20 rounded-3xl flex flex-col items-center justify-center p-12 text-center relative overflow-hidden shadow-[0_15px_40px_rgba(23,206,164,0.05)]">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#17CEA4]/5 rounded-full blur-2xl" />
+          <div className="flex items-center gap-2 text-xs text-[#17CEA4] font-mono uppercase tracking-widest font-bold mb-4">
+            <Activity size={16} className="animate-pulse" /> Now Serving
+          </div>
+          <p className="text-[9rem] md:text-[12rem] font-black text-white leading-none tracking-tighter font-mono">
+            {currentToken ? String(currentToken).padStart(3, '0') : '---'}
+          </p>
         </div>
 
-        {/* Right Side: Upcoming Queue */}
-        <div className="bg-gray-800 flex flex-col p-10">
-          <h2 className="text-4xl font-bold uppercase tracking-wider text-gray-400 mb-6 text-center">Upcoming</h2>
+        {/* Upcoming Queue Panel */}
+        <div className="bg-[#111618] border border-gray-800/80 rounded-3xl flex flex-col p-8 justify-between shadow-[0_15px_40px_rgba(0,0,0,0.3)]">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-850 mb-6">
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+              <Users size={16} className="text-[#1A81E6]" /> Upcoming Queue
+            </h2>
+            <span className="text-[10px] font-mono text-gray-600">TV DISPLAY MODE</span>
+          </div>
+
           <div className="flex-grow flex items-center justify-center">
             { getStatusMessage() ? (
-                <div className="flex flex-col items-center justify-center text-center text-2xl text-gray-300">
+                <div className="flex flex-col items-center justify-center text-center p-8 bg-[#0D1012]/40 rounded-2xl border border-gray-850/60 max-w-sm w-full">
                    {getStatusMessage()?.icon}
-                   <p className="mt-4 font-semibold">{getStatusMessage()?.text}</p>
+                   <p className="mt-4 text-sm font-bold font-mono text-gray-400 leading-relaxed">{getStatusMessage()?.text}</p>
                 </div>
             ) : queue.length > 0 ? (
-               <div className="w-full space-y-4">
-                  {queue.slice(0, 5).map((patient, index) => (
-                    <div key={patient.token} className={`flex items-center justify-between p-5 rounded-lg text-3xl transition-all duration-300 ease-in-out transform ${index === 0 ? 'bg-blue-500 shadow-2xl scale-105' : 'bg-gray-700 opacity-80'}`}>
-                      <span className={`font-bold ${index === 0 ? 'text-white' : 'text-blue-300'}`}>#{patient.token}</span>
-                      <span className={`font-medium ${index === 0 ? 'text-white' : 'text-gray-200'}`}>{patient.name}</span>
-                    </div>
-                  ))}
+               <div className="w-full space-y-3">
+                  {queue.slice(0, 4).map((patient, index) => {
+                    const isNext = index === 0;
+                    return (
+                      <div 
+                        key={patient.token} 
+                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                          isNext 
+                            ? 'bg-[#1A81E6] border-transparent shadow-[0_4px_25px_rgba(26,129,230,0.25)] scale-[1.02]' 
+                            : 'bg-[#0D1012] border-gray-850'
+                        }`}
+                      >
+                        <span className={`font-mono text-xl font-bold ${isNext ? 'text-white' : 'text-[#1A81E6]'}`}>
+                          #{String(patient.token).padStart(3, '0')}
+                        </span>
+                        <span className={`text-base font-bold ${isNext ? 'text-white' : 'text-gray-300'}`}>
+                          {patient.name}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
             ) : (
-               <div className="text-center text-2xl text-gray-500">
-                  <p>The queue is currently empty.</p>
+               <div className="text-center">
+                  <p className="text-xs text-gray-600 font-mono">Queue is empty</p>
                </div>
             )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-gray-850 flex items-center justify-between text-[10px] font-mono text-gray-500">
+            <span>PING AUDIO NOTIFICATIONS ACTIVE</span>
+            <Bell size={12} className="text-[#1A81E6] animate-bounce" />
           </div>
         </div>
       </main>

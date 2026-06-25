@@ -6,7 +6,7 @@ import { useAuth } from '../../../firebase/auth-provider';
 import { db, rtdb } from '../../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, onValue, set, get, child } from 'firebase/database';
-import { ArrowLeft, UserPlus, ListOrdered, LogOut, Clock, Hospital } from 'lucide-react';
+import { ArrowLeft, UserPlus, ListOrdered, LogOut, Clock, Hospital, UserCheck, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -16,8 +16,8 @@ interface Patient {
 }
 
 interface ClinicDetails {
-    clinicName: string;
-    doctorName: string;
+  clinicName: string;
+  doctorName: string;
 }
 
 export default function ReceptionView() {
@@ -34,7 +34,6 @@ export default function ReceptionView() {
 
   useEffect(() => {
     if (clinicCode) {
-      // Fetch static clinic details from Firestore
       const q = query(collection(db, "clinics"), where("clinicCode", "==", clinicCode));
       getDocs(q).then(querySnapshot => {
           if (!querySnapshot.empty) {
@@ -43,7 +42,6 @@ export default function ReceptionView() {
           }
       });
 
-      // Listen for real-time queue updates from RTDB
       const queueRef = ref(rtdb, `queues/${clinicCode}`);
       onValue(queueRef, (snapshot) => {
         const data = snapshot.val();
@@ -51,7 +49,7 @@ export default function ReceptionView() {
           const currentTokenVal = data.currentToken || 0;
           const allPatients = data.patients ? Object.values(data.patients) as Patient[] : [];
           const upcomingPatients = allPatients.filter(p => p.token > currentTokenVal);
-          const avgTime = data.avgConsultationTime || 5; // Use dynamic or default
+          const avgTime = data.avgConsultationTime || 5;
           
           setQueue(allPatients);
           setCurrentToken(currentTokenVal);
@@ -88,87 +86,138 @@ export default function ReceptionView() {
   };
 
   if (!clinicCode) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Clinic code not found. Please access this page via your dashboard.</p></div>;
+    return (
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Clinic code not found. Please access this page via your dashboard.
+      </div>
+    );
   }
 
   return (
-    <div className="h-screen bg-gray-100 dark:bg-gray-900 font-sans flex flex-col">
-      <header className="bg-white dark:bg-gray-800 shadow-md z-10">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <Hospital className="text-blue-600 dark:text-blue-400"/>
-                <div>
-                    <h1 className="text-xl font-bold text-gray-800 dark:text-white">{clinicDetails?.clinicName || 'Reception'}</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Dr. {clinicDetails?.doctorName}</p>
-                </div>
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col relative overflow-hidden">
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-md border-b border-gray-800/40 bg-[#0D1012]/80">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#1A81E6]/10 border border-[#1A81E6]/25 flex items-center justify-center text-[#1A81E6]">
+              <Hospital size={18} />
             </div>
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                    <ArrowLeft size={18} />
-                    <span>Dashboard</span>
-                </Link>
-                <button onClick={handleLogout} className="flex items-center gap-2 font-semibold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500 transition-colors">
-                    <LogOut size={18} />
-                    <span>Logout</span>
-                </button>
+            <div>
+              <h1 className="text-sm font-bold text-white font-mono leading-none">{clinicDetails?.clinicName || 'Reception'}</h1>
+              <p className="text-[10px] text-gray-500 font-mono mt-0.5">Dr. {clinicDetails?.doctorName}</p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors font-mono">
+              <ArrowLeft size={14} /> Dashboard
+            </Link>
+            <button 
+              onClick={handleLogout} 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/5 text-xs font-semibold text-red-400 transition-all font-mono"
+            >
+              <LogOut size={14} />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-grow grid md:grid-cols-2 gap-px bg-gray-200 dark:bg-gray-700">
-        {/* Left Panel: Patient Intake */}
-        <div className="bg-gray-100 dark:bg-gray-900 p-8 flex flex-col">
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-3"><UserPlus /> Rapid Intake Portal</h2>
-            <form onSubmit={handleAddPatient} className="space-y-5">
-                <input 
-                    type="text" 
-                    value={patientName}
-                    onChange={(e) => setPatientName(e.target.value)}
-                    placeholder="Enter Full Name"
-                    required
-                    className="w-full px-5 py-4 text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white transition-all"
-                />
-                <button 
-                    type="submit"
-                    className="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-lg">
-                    Register Patient & Add to Queue
-                </button>
-            </form>
-             <div className="mt-auto pt-8">
-                <p className="text-center text-gray-500 dark:text-gray-400">The patient will be assigned a token and added to the consultation queue automatically.</p>
+      {/* Main Panel grid */}
+      <main className="flex-grow max-w-7xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Intake Panel */}
+        <div className="bg-[#111618] border border-gray-800/80 rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-800/60">
+              <div className="w-8 h-8 rounded-lg bg-[#1A81E6]/10 border border-[#1A81E6]/20 flex items-center justify-center text-[#1A81E6]">
+                <UserPlus size={16} />
+              </div>
+              <h2 className="text-lg font-bold text-white font-mono">Rapid Intake Portal</h2>
             </div>
+
+            <form onSubmit={handleAddPatient} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider font-mono">Patient Name</label>
+                <input 
+                  type="text" 
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  required
+                  className="w-full px-4 py-3 bg-[#0D1012] border border-gray-800 rounded-xl focus:outline-none focus:border-[#1A81E6] focus:ring-1 focus:ring-[#1A81E6] text-white placeholder-gray-600 transition-all text-sm"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-[#1A81E6] hover:bg-[#1A81E6]/95 text-white font-bold py-3 rounded-xl transition-all shadow-[0_4px_12px_rgba(26,129,230,0.15)] text-xs uppercase tracking-wider font-mono"
+              >
+                Register & Queue Patient
+              </button>
+            </form>
+          </div>
+
+          <div className="mt-8 text-center border-t border-gray-800/40 pt-6">
+            <p className="text-[11px] text-gray-500 font-mono">Intake auto-generates sequential token numbers instantly synced to clinician dashboards.</p>
+          </div>
         </div>
 
-        {/* Right Panel: Live Queue */}
-        <div className="bg-gray-100 dark:bg-gray-900 p-8 flex flex-col">
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-3"><ListOrdered /> Live Consultation Queue</h2>
-            
-            <div className="grid grid-cols-2 gap-4 text-center mb-4">
-              <div className="bg-green-100 dark:bg-green-900/50 p-4 rounded-lg">
-                  <span className="text-lg font-semibold text-green-800 dark:text-green-300">Now Serving</span>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">{currentToken || '-'}</p>
-              </div>
-              <div className="bg-blue-100 dark:bg-blue-900/50 p-4 rounded-lg">
-                  <span className="text-lg font-semibold text-blue-800 dark:text-blue-300">Est. Wait Time</span>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">≈{waitTime} min</p>
-              </div>
+        {/* Live Queue Panel */}
+        <div className="bg-[#111618] border border-gray-800/80 rounded-2xl p-6 flex flex-col">
+          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-800/60">
+            <div className="w-8 h-8 rounded-lg bg-[#17CEA4]/10 border border-[#17CEA4]/20 flex items-center justify-center text-[#17CEA4]">
+              <ListOrdered size={16} />
             </div>
+            <h2 className="text-lg font-bold text-white font-mono">Live Consultation Queue</h2>
+          </div>
 
-            <div className="space-y-3 flex-grow overflow-y-auto pr-2">
-                {queue.length > 0 ? queue.sort((a,b)=>a.token - b.token).map(patient => (
-                    <div key={patient.token} className={`flex items-center justify-between p-4 rounded-lg transition-all ${patient.token <= currentToken ? 'bg-gray-200 dark:bg-gray-700 opacity-60' : 'bg-white dark:bg-gray-800 shadow-sm'}`}>
-                        <span className={`font-bold text-xl ${patient.token <= currentToken ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400'}`}>#{patient.token}</span>
-                        <span className={`font-medium text-lg ${patient.token <= currentToken ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{patient.name}</span>
-                    </div>
-                )) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                        <Clock size={40} className="text-gray-400 mb-2"/>
-                        <p className="text-gray-500 dark:text-gray-400 text-lg">The queue is currently empty.</p>
-                    </div>
-                )}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-[#0D1012] border border-gray-850 p-4 rounded-xl text-center">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#17CEA4] font-mono uppercase tracking-wider mb-1 font-bold">
+                <Activity size={12} className="animate-pulse" /> Serving
+              </div>
+              <p className="text-2xl font-bold text-white font-mono">{currentToken || '-'}</p>
             </div>
+            
+            <div className="bg-[#0D1012] border border-gray-850 p-4 rounded-xl text-center">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-500 font-mono uppercase tracking-wider mb-1">
+                <Clock size={12} /> Wait Time
+              </div>
+              <p className="text-2xl font-bold text-white font-mono">~{waitTime}m</p>
+            </div>
+          </div>
+
+          <div className="space-y-2 flex-grow overflow-y-auto max-h-[320px] pr-1 custom-scrollbar">
+            {queue.length > 0 ? (
+              queue.sort((a,b)=>a.token - b.token).map(patient => {
+                const isCompleted = patient.token <= currentToken;
+                return (
+                  <div 
+                    key={patient.token} 
+                    className={`flex items-center justify-between p-3.5 border rounded-xl transition-all ${
+                      isCompleted 
+                        ? 'border-gray-850 bg-gray-950/20 opacity-40' 
+                        : 'border-gray-800 bg-[#0D1012] shadow-sm hover:border-gray-750'
+                    }`}
+                  >
+                    <span className={`font-mono text-sm font-bold ${isCompleted ? 'text-gray-600' : 'text-[#1A81E6]'}`}>
+                      #{String(patient.token).padStart(3, '0')}
+                    </span>
+                    <span className={`text-xs font-semibold ${isCompleted ? 'text-gray-500 line-through' : 'text-white'}`}>
+                      {patient.name}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Clock size={32} className="text-gray-600 mb-2"/>
+                <p className="text-xs text-gray-500 font-mono">Queue is empty</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
   );
 }
+

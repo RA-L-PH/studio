@@ -6,11 +6,11 @@ import { useParams } from 'next/navigation';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../../firebase';
 import Link from 'next/link';
+import { ArrowLeft, Clock, Users, Hospital, Activity } from 'lucide-react';
 
 interface Patient {
   token: number;
   name: string;
-  // Add other patient details here if needed
 }
 
 interface QueueData {
@@ -40,19 +40,24 @@ export default function ClinicQueue() {
   }, [clinicCode]);
 
   if (loading) {
-    return <div>Loading queue...</div>;
+    return (
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex items-center justify-center font-mono text-xs">
+        Syncing queue data...
+      </div>
+    );
   }
 
   if (!queueData) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-          <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
-              <h1 className="text-2xl font-bold mb-4">Clinic Not Found</h1>
-              <p className="mb-6">The clinic with code <strong>{clinicCode}</strong> does not exist.</p>
-              <Link href="/find-clinic" className="text-blue-500 hover:underline">
-              Go back to search
-              </Link>
-          </div>
+      <div className="min-h-screen bg-[#0D1012] text-gray-100 flex flex-col items-center justify-center p-6 relative">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="max-w-md w-full bg-[#111618] p-8 border border-gray-800 rounded-2xl text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <h1 className="text-2xl font-bold mb-3 font-mono text-white">Clinic Not Found</h1>
+          <p className="text-xs text-gray-400 mb-6">The clinic with code <strong className="text-[#17CEA4] font-mono">{clinicCode}</strong> does not exist.</p>
+          <Link href="/find-clinic" className="inline-flex items-center gap-1.5 text-xs text-[#1A81E6] hover:underline font-semibold font-mono">
+            <ArrowLeft size={14} /> Back to search
+          </Link>
+        </div>
       </div>
     );
   }
@@ -61,42 +66,64 @@ export default function ClinicQueue() {
   const waitingPatients = patients.filter(p => p.token > queueData.currentToken);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Clinic Queue</h1>
-          <Link href="/find-clinic" className="text-blue-500 hover:underline">
-            &larr; Back to Search
+    <div className="min-h-screen bg-[#0D1012] text-gray-100 p-6 relative">
+      <div className="absolute top-0 left-1/4 -translate-x-1/2 w-[500px] h-[500px] bg-[#1A81E6]/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#1A81E6]/10 border border-[#1A81E6]/20 flex items-center justify-center text-[#1A81E6]">
+              <Hospital size={16} />
+            </div>
+            <h1 className="text-2xl font-bold text-white font-mono tracking-wide">Clinic Queue</h1>
+          </div>
+          <Link href="/find-clinic" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft size={14} /> Back to Search
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-blue-100 p-6 rounded-lg text-center">
-            <p className="text-lg font-semibold text-blue-800">Currently Serving</p>
-            <p className="text-5xl font-bold text-blue-900">{queueData.currentToken}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-[#111618] border border-[#1A81E6]/30 p-6 rounded-2xl text-center shadow-[0_4px_20px_rgba(26,129,230,0.15)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#1A81E6]/5 rounded-full blur-xl" />
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#1A81E6] font-mono uppercase tracking-wider mb-2 font-bold">
+              <Activity size={12} className="animate-pulse" /> Currently Serving
+            </div>
+            <p className="text-5xl font-extrabold text-white font-mono">{queueData.currentToken || '-'}</p>
           </div>
-          <div className="bg-green-100 p-6 rounded-lg text-center">
-            <p className="text-lg font-semibold text-green-800">Approx. Wait Time</p>
-            <p className="text-5xl font-bold text-green-900">{waitingPatients.length * 15} min</p>
+
+          <div className="bg-[#111618] border border-gray-800/80 p-6 rounded-2xl text-center shadow-[0_4px_15px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#17CEA4] font-mono uppercase tracking-wider mb-2 font-bold">
+              <Clock size={12} /> Approx. Wait Time
+            </div>
+            <p className="text-5xl font-extrabold text-white font-mono">{waitingPatients.length * 15} <span className="text-xs text-gray-500 font-normal">min</span></p>
           </div>
         </div>
 
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Waiting Patients</h2>
+        <div className="bg-[#111618] border border-gray-800/85 rounded-2xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.4)]">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-800">
+            <h2 className="text-lg font-bold text-white font-mono flex items-center gap-2">
+              <Users size={16} className="text-[#17CEA4]" /> Waiting Queue
+            </h2>
+            <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">{waitingPatients.length} Active Patients</span>
+          </div>
+
           {waitingPatients.length > 0 ? (
-            <ul className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-800/60 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
               {waitingPatients.map((patient) => (
-                <li key={patient.token} className="py-4 flex justify-between items-center">
-                  <span className="text-lg font-medium">Token: {patient.token}</span>
-                  <span className="text-lg">{patient.name}</span>
-                </li>
+                <div key={patient.token} className="py-3 flex justify-between items-center">
+                  <span className="text-xs font-mono text-[#17CEA4] bg-[#17CEA4]/5 border border-[#17CEA4]/20 px-2.5 py-1 rounded-lg">
+                    TOKEN #{String(patient.token).padStart(3, '0')}
+                  </span>
+                  <span className="text-sm font-semibold text-white">{patient.name}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">The queue is empty.</p>
+            <p className="text-center text-xs text-gray-500 font-mono py-12">The queue is currently empty.</p>
           )}
         </div>
       </div>
     </div>
   );
 }
+
